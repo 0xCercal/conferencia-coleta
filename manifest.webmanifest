@@ -1,0 +1,12 @@
+{
+  "name": "Conferência de Coleta",
+  "short_name": "Coleta",
+  "description": "Bipagem de código de barras para conferir a coleta diária no fornecedor.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f6f5f0",
+  "theme_color": "#0f6e56",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

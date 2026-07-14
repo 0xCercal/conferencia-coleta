@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f6e56" />
+  <title>Conferência de Coleta</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div id="flash"></div>
+
+  <main id="views">
+
+    <!-- Tela: Nova conferência -->
+    <section id="view-nova" class="view">
+      <h1>Nova conferência</h1>
+      <p class="hint">Cole abaixo a mensagem do WhatsApp com a lista de coleta.</p>
+      <textarea id="nova-texto" rows="12" placeholder="*FERCRIS*&#10;1 - SGR-0501 Sifão de Inox...&#10;&#10;*CERCAL*&#10;1 - LEMI-0501 Lixeira..."></textarea>
+      <div id="nova-preview" class="hidden"></div>
+      <button id="btn-montar" class="btn-primary">Montar checklist</button>
+    </section>
+
+    <!-- Tela: Conferência -->
+    <section id="view-conferencia" class="view hidden">
+      <div id="conf-vazia" class="empty-state hidden">
+        <p>Nenhuma conferência em andamento.</p>
+        <button class="btn-primary" data-goto="nova">Iniciar nova conferência</button>
+      </div>
+      <div id="conf-conteudo">
+        <div id="conf-abas" class="tabs"></div>
+        <div id="scanner-area">
+          <div id="reader" class="hidden"></div>
+          <div id="ultimo-bipe" class="hidden"></div>
+          <div class="scan-controls">
+            <button id="btn-scanner" class="btn-primary">Bipar com a câmera</button>
+            <form id="form-manual" class="manual-row">
+              <input id="input-manual" type="text" inputmode="text" autocomplete="off" placeholder="Digitar código ou SKU" />
+              <button type="submit">OK</button>
+            </form>
+          </div>
+        </div>
+        <ul id="conf-lista" class="item-list"></ul>
+        <button id="btn-finalizar" class="btn-secondary">Ver resumo / finalizar</button>
+      </div>
+    </section>
+
+    <!-- Tela: Cadastro -->
+    <section id="view-cadastro" class="view hidden">
+      <h1>Cadastro de produtos</h1>
+      <p class="hint">Relação SKU ↔ código de barras do fornecedor. Importe a planilha exportada ou cole o texto.</p>
+      <div class="card">
+        <p id="cadastro-status"></p>
+        <label class="file-label">
+          Importar planilha (.xlsx ou .csv)
+          <input id="input-planilha" type="file" accept=".xlsx,.xls,.csv" hidden />
+        </label>
+        <details>
+          <summary>Ou colar texto (SKU e código por linha)</summary>
+          <textarea id="cadastro-texto" rows="5" placeholder="SGR-0501;7891234567890&#10;DHTA02;7899876543210"></textarea>
+          <button id="btn-colar-cadastro">Adicionar do texto</button>
+        </details>
+      </div>
+      <div id="mapeamento" class="card hidden"></div>
+      <div class="card">
+        <input id="cadastro-busca" type="search" placeholder="Buscar SKU ou código" />
+        <ul id="cadastro-lista" class="item-list"></ul>
+      </div>
+      <button id="btn-limpar-cadastro" class="btn-danger-ghost">Apagar todo o cadastro</button>
+    </section>
+
+    <!-- Tela: Histórico -->
+    <section id="view-historico" class="view hidden">
+      <h1>Histórico</h1>
+      <div id="historico-lista"></div>
+    </section>
+
+  </main>
+
+  <!-- Diálogos -->
+  <div id="overlay" class="hidden">
+    <div id="dialogo" class="card"></div>
+  </div>
+
+  <nav id="navbar">
+    <button data-goto="nova"><span class="nav-ico">➕</span>Nova</button>
+    <button data-goto="conferencia" class="active"><span class="nav-ico">📷</span>Conferir</button>
+    <button data-goto="cadastro"><span class="nav-ico">🗂️</span>Cadastro</button>
+    <button data-goto="historico"><span class="nav-ico">🕘</span>Histórico</button>
+  </nav>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
