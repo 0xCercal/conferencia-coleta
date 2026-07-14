@@ -12,6 +12,9 @@ import {
   fuzzyMatches,
 } from './logic.js';
 
+// Mantenha em sincronia com o CACHE do sw.js a cada publicação.
+const APP_VERSION = 'v10';
+
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
 
@@ -735,4 +738,5 @@ if (navigator.storage && navigator.storage.persist) {
 }
 
 // ---------- Início ----------
+$('#versao-app').textContent = `Conferência de Coleta — versão ${APP_VERSION}`;
 goto(conf ? 'conferencia' : 'nova');

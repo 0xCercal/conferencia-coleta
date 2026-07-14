@@ -209,6 +209,8 @@ button:active { transform: scale(0.98); }
 .hist-item summary { font-weight: 600; font-size: 14px; cursor: pointer; }
 .hist-item .hist-meta { font-size: 13px; color: var(--texto-2); margin: 4px 0 8px; }
 
+.versao { text-align: center; font-size: 12px; color: var(--texto-2); margin-top: 14px; }
+
 .empty-state { text-align: center; padding: 40px 20px; color: var(--texto-2); }
 .empty-state .btn-primary { margin-top: 16px; }
 
