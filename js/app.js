@@ -7,6 +7,7 @@ import {
   adjustItem,
   companyProgress,
   summary,
+  gtinValid,
 } from './logic.js';
 
 // ---------- Persistência ----------
@@ -215,6 +216,13 @@ function openItemDialog(companyIdx, sku) {
 // ---------- Bipagem ----------
 function handleCode(code) {
   if (!conf) return;
+  if (gtinValid(code) === false) {
+    flash(false);
+    beep(false);
+    showUltimoBipe('erro', 'Leitura inválida — bipe de novo', `O código ${code} tem dígito verificador errado.`);
+    $('#ultimo-bipe').classList.remove('hidden');
+    return;
+  }
   const sku = resolveSku(catalog, code, conf);
   if (!sku) {
     flash(false);
@@ -315,11 +323,37 @@ $('#form-manual').addEventListener('submit', (e) => {
   handleCode(code);
 });
 
+// ---------- Leitor Bluetooth (modo teclado) ----------
+// Leitores físicos "digitam" o código e mandam Enter. Captura global:
+// funciona sem precisar tocar no campo de digitação antes de bipar.
+let wedgeBuf = '';
+let wedgeLast = 0;
+
+document.addEventListener('keydown', (e) => {
+  if (!conf || $('#view-conferencia').classList.contains('hidden')) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+  const now = Date.now();
+  if (now - wedgeLast > 300) wedgeBuf = '';
+  wedgeLast = now;
+  if (e.key === 'Enter') {
+    if (wedgeBuf.length >= 4) {
+      ensureAudio();
+      handleCode(wedgeBuf);
+    }
+    wedgeBuf = '';
+  } else if (e.key.length === 1) {
+    wedgeBuf += e.key;
+  }
+});
+
 // ---------- Scanner (câmera) ----------
 let scanner = null;
 let scannerOn = false;
 let lastCode = '';
 let lastTime = 0;
+let candidate = '';
+let candidateCount = 0;
 
 const SCAN_FORMATS = typeof Html5QrcodeSupportedFormats !== 'undefined'
   ? [
@@ -354,6 +388,15 @@ $('#btn-scanner').addEventListener('click', async () => {
       (decoded) => {
         const now = Date.now();
         if (decoded === lastCode && now - lastTime < 2500) return;
+        // Leitura com dígito verificador inválido é descartada (câmera leu errado).
+        if (gtinValid(decoded) === false) return;
+        // Exige duas leituras iguais seguidas antes de aceitar — elimina
+        // os EANs com o primeiro dígito trocado por leitura ruim.
+        if (decoded === candidate) candidateCount++;
+        else { candidate = decoded; candidateCount = 1; }
+        if (candidateCount < 2) return;
+        candidate = '';
+        candidateCount = 0;
         lastCode = decoded;
         lastTime = now;
         handleCode(decoded);
@@ -362,6 +405,16 @@ $('#btn-scanner').addEventListener('click', async () => {
     );
     scannerOn = true;
     $('#btn-scanner').textContent = 'Parar câmera';
+    // Zoom e foco contínuo ajudam com códigos de barras pequenos.
+    try {
+      const caps = scanner.getRunningTrackCapabilities();
+      const advanced = [];
+      if (caps && caps.zoom) advanced.push({ zoom: Math.min(2, caps.zoom.max || 2) });
+      if (caps && Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
+        advanced.push({ focusMode: 'continuous' });
+      }
+      if (advanced.length) await scanner.applyVideoConstraints({ advanced });
+    } catch { /* nem todo aparelho suporta; segue sem zoom */ }
   } catch (err) {
     $('#reader').classList.add('hidden');
     showUltimoBipe('erro', 'Não foi possível abrir a câmera', 'Permita o acesso à câmera nos ajustes do Safari e tente de novo.');

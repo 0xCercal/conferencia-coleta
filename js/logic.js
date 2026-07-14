@@ -13,11 +13,40 @@ export function createConference(parsed, startedAt) {
   };
 }
 
+// Valida o dígito verificador de códigos GTIN (EAN-8, UPC-A, EAN-13, GTIN-14).
+// Retorna true/false quando o código tem formato GTIN; null quando não se aplica
+// (ex: Code 128 alfanumérico), caso em que não dá para validar.
+export function gtinValid(code) {
+  const c = String(code || '').trim();
+  if (!/^\d{8}$/.test(c) && !/^\d{12,14}$/.test(c)) return null;
+  const digits = c.split('').map(Number);
+  const check = digits.pop();
+  let sum = 0;
+  let weight = 3;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    sum += digits[i] * weight;
+    weight = weight === 3 ? 1 : 3;
+  }
+  return (10 - (sum % 10)) % 10 === check;
+}
+
+// Variantes equivalentes do código: UPC-A (12 dígitos) é o EAN-13 sem o zero
+// à esquerda — cobre leitores/planilhas que divergem nesse detalhe.
+export function codeVariants(code) {
+  const c = String(code || '').trim();
+  const variants = [c];
+  if (/^\d{12}$/.test(c)) variants.push('0' + c);
+  if (/^\d{13}$/.test(c) && c.startsWith('0')) variants.push(c.slice(1));
+  return variants;
+}
+
 // Converte o código lido (EAN do catálogo ou SKU digitado) em SKU, ou null.
 export function resolveSku(catalog, code, conf) {
   const c = String(code || '').trim();
   if (!c) return null;
-  if (catalog[c]) return catalog[c].sku;
+  for (const variant of codeVariants(c)) {
+    if (catalog[variant]) return catalog[variant].sku;
+  }
   const upper = c.toUpperCase();
   if (conf && conf.companies.some((co) => co.items.some((i) => i.sku === upper))) return upper;
   return null;

@@ -9,6 +9,8 @@ import {
   adjustItem,
   companyProgress,
   summary,
+  gtinValid,
+  codeVariants,
 } from '../js/logic.js';
 
 const LIST = `*FERCRIS*
@@ -112,6 +114,39 @@ test('companyProgress conta unidades, não linhas', () => {
   const conf = makeConf();
   processScan(conf, 'ARLN-0103', 0);
   assert.deepEqual(companyProgress(conf.companies[0]), { scanned: 1, total: 3 });
+});
+
+test('gtinValid aceita EAN-13 com dígito verificador correto', () => {
+  assert.equal(gtinValid('7891000315507'), true);
+  assert.equal(gtinValid('4007817327326'), true);
+});
+
+test('gtinValid rejeita EAN-13 com primeiro dígito trocado (leitura ruim de câmera)', () => {
+  assert.equal(gtinValid('1891000315507'), false);
+  assert.equal(gtinValid('9891000315507'), false);
+});
+
+test('gtinValid valida EAN-8 e UPC-A', () => {
+  assert.equal(gtinValid('96385074'), true);
+  assert.equal(gtinValid('96385075'), false);
+  assert.equal(gtinValid('036000291452'), true);
+});
+
+test('gtinValid retorna null para códigos não-GTIN (Code 128 alfanumérico)', () => {
+  assert.equal(gtinValid('ABC-123'), null);
+  assert.equal(gtinValid('12345'), null);
+  assert.equal(gtinValid(''), null);
+});
+
+test('codeVariants cobre UPC-A vs EAN-13 com zero à esquerda', () => {
+  assert.deepEqual(codeVariants('036000291452'), ['036000291452', '0036000291452']);
+  assert.deepEqual(codeVariants('0891000315507'), ['0891000315507', '891000315507']);
+  assert.deepEqual(codeVariants('7891000315507'), ['7891000315507']);
+});
+
+test('resolveSku encontra EAN cadastrado sem o zero à esquerda', () => {
+  const cat = { '0036000291452': { sku: 'DHTA02' } };
+  assert.equal(resolveSku(cat, '036000291452', makeConf()), 'DHTA02');
 });
 
 test('summary lista faltantes com quantidade restante', () => {
