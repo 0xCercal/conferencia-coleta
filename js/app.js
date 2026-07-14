@@ -409,10 +409,21 @@ $('#btn-scanner').addEventListener('click', async () => {
   }
   try {
     $('#reader').classList.remove('hidden');
-    scanner = new Html5Qrcode('reader', { formatsToSupport: SCAN_FORMATS, verbose: false });
+    scanner = new Html5Qrcode('reader', {
+      formatsToSupport: SCAN_FORMATS,
+      verbose: false,
+      // Usa o decodificador nativo do sistema quando o navegador oferece —
+      // mais preciso que o genérico, principalmente em códigos pequenos.
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    });
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 15, qrbox: (w, h) => ({ width: Math.min(320, Math.floor(w * 0.85)), height: 150 }) },
+      {
+        fps: 15,
+        qrbox: (w, h) => ({ width: Math.min(320, Math.floor(w * 0.85)), height: 150 }),
+        // Full HD: barras finas de códigos pequenos precisam de pixels.
+        videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      },
       (decoded) => {
         const now = Date.now();
         if (decoded === lastCode && now - lastTime < 2500) return;
@@ -436,12 +447,19 @@ $('#btn-scanner').addEventListener('click', async () => {
     // Zoom e foco contínuo ajudam com códigos de barras pequenos.
     try {
       const caps = scanner.getRunningTrackCapabilities();
-      const advanced = [];
-      if (caps && caps.zoom) advanced.push({ zoom: Math.min(2, caps.zoom.max || 2) });
       if (caps && Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
-        advanced.push({ focusMode: 'continuous' });
+        await scanner.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] });
       }
-      if (advanced.length) await scanner.applyVideoConstraints({ advanced });
+      if (caps && caps.zoom) {
+        const slider = $('#zoom-slider');
+        slider.min = Math.max(1, caps.zoom.min || 1);
+        slider.max = Math.min(5, caps.zoom.max || 5);
+        slider.step = caps.zoom.step && caps.zoom.step >= 0.1 ? caps.zoom.step : 0.5;
+        const salvo = Number(localStorage.getItem('cc_zoom')) || 2;
+        slider.value = Math.min(Number(slider.max), Math.max(Number(slider.min), salvo));
+        $('#zoom-controle').classList.remove('hidden');
+        await aplicarZoom(Number(slider.value));
+      }
     } catch { /* nem todo aparelho suporta; segue sem zoom */ }
   } catch (err) {
     $('#reader').classList.add('hidden');
@@ -449,6 +467,19 @@ $('#btn-scanner').addEventListener('click', async () => {
     $('#ultimo-bipe').classList.remove('hidden');
     scanner = null;
   }
+});
+
+async function aplicarZoom(valor) {
+  if (!scanner || !scannerOn) return;
+  $('#zoom-valor').textContent = `${valor}x`;
+  localStorage.setItem('cc_zoom', String(valor));
+  try {
+    await scanner.applyVideoConstraints({ advanced: [{ zoom: valor }] });
+  } catch { /* aparelho sem suporte a zoom via web */ }
+}
+
+$('#zoom-slider').addEventListener('input', () => {
+  aplicarZoom(Number($('#zoom-slider').value));
 });
 
 function stopScanner() {
@@ -462,6 +493,8 @@ function stopScanner() {
     reader.classList.add('hidden');
     reader.innerHTML = '';
   }
+  const zoom = $('#zoom-controle');
+  if (zoom) zoom.classList.add('hidden');
   const btn = $('#btn-scanner');
   if (btn) btn.textContent = 'Bipar com a câmera';
 }
