@@ -515,6 +515,23 @@ function renderCadastroLista() {
 
 $('#cadastro-busca').addEventListener('input', renderCadastroLista);
 
+$('#btn-exportar-cadastro').addEventListener('click', () => {
+  const entries = Object.entries(catalog);
+  if (!entries.length) {
+    $('#cadastro-status').textContent = 'Nada para exportar: o cadastro está vazio.';
+    return;
+  }
+  const csv = 'SKU;CODIGO_BARRAS\n' + entries.map(([ean, v]) => `${v.sku};${ean}`).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cadastro-conferencia.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+});
+
 $('#btn-limpar-cadastro').addEventListener('click', () => {
   if (!window.confirm('Apagar TODO o cadastro de códigos? Essa ação não tem volta.')) return;
   catalog = {};
@@ -646,6 +663,11 @@ function renderHistorico() {
 // ---------- Service worker ----------
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Pede ao sistema para não apagar os dados do app (cadastro, histórico).
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(() => {});
 }
 
 // ---------- Início ----------
