@@ -5,7 +5,7 @@ Status: Aprovado pelo usuário
 
 ## Problema
 
-O usuário faz cross docking: coleta produtos diariamente em dois fornecedores/marcas (FERCRIS e CERCAL). Recebe de uma funcionária, via WhatsApp, uma lista com quantidade + SKU + descrição dos produtos a coletar. Hoje confere manualmente item por item contra o que a expedição do fornecedor entrega. Objetivo: bipar o código de barras de cada produto com o celular e ter a conferência automática contra a lista.
+O usuário faz cross docking: coleta produtos diariamente em um único fornecedor. Ele possui duas empresas próprias (duas contas no Mercado Livre, dois CNPJs): FERCRIS e CERCAL — os pedidos vêm separados por empresa na lista. Recebe de uma funcionária, via WhatsApp, uma lista com quantidade + SKU + descrição dos produtos a coletar, agrupada por empresa. Hoje confere manualmente item por item contra o que a expedição do fornecedor entrega. Objetivo: bipar o código de barras de cada produto com o celular e ter a conferência automática contra a lista.
 
 ## Contexto e restrições
 
@@ -19,8 +19,8 @@ O usuário faz cross docking: coleta produtos diariamente em dois fornecedores/m
   *CERCAL*
   1 - LEMI-0501 Lixeira Embutida de Cozinha Inox Redonda 5 Litros (Mizu Grafite Fosca)
   ```
-  Padrão de linha: `<quantidade> - <SKU> <descrição>`. Empresas delimitadas por `*NOME*`.
-- O código de barras do produto (EAN) é DIFERENTE do SKU. O usuário consegue exportar da plataforma de e-commerce uma planilha com SKU + código de barras.
+  Padrão de linha: `<quantidade> - <SKU> <descrição>`. Empresas do usuário delimitadas por `*NOME*` (ex: FERCRIS, CERCAL).
+- O código de barras do produto (EAN) é DIFERENTE do SKU. O usuário consegue exportar uma planilha com SKU + código de barras. Como o fornecedor é único, existe UM único cadastro SKU↔EAN, compartilhado pelas duas empresas (o mesmo produto pode aparecer na lista da FERCRIS e da CERCAL).
 - Quantidades > 1 existem (cada unidade deve ser bipada individualmente).
 - Internet estável no local, mas o app deve continuar funcionando se o sinal oscilar durante a conferência.
 - Usuário único. Sem necessidade de login ou sincronização entre aparelhos (por ora).
