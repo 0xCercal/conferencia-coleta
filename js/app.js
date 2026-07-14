@@ -9,6 +9,7 @@ import {
   summary,
   gtinValid,
   cellToEan,
+  fuzzyMatches,
 } from './logic.js';
 
 // ---------- Persistência ----------
@@ -215,7 +216,10 @@ function openItemDialog(companyIdx, sku) {
 }
 
 // ---------- Bipagem ----------
-function handleCode(code) {
+let unknownPending = '';
+let unknownPendingTime = 0;
+
+function handleCode(code, fromCamera = false) {
   if (!conf) return;
   if (gtinValid(code) === false) {
     flash(false);
@@ -228,6 +232,16 @@ function handleCode(code) {
   if (!sku) {
     flash(false);
     beep(false);
+    // Pela câmera, código desconhecido precisa ser lido de novo antes de
+    // abrir o cadastro — leitura embaçada quase nunca erra igual duas vezes.
+    if (fromCamera && !(unknownPending === code && Date.now() - unknownPendingTime < 15000)) {
+      unknownPending = code;
+      unknownPendingTime = Date.now();
+      showUltimoBipe('aviso', 'Código desconhecido — bipe de novo para confirmar', code);
+      $('#ultimo-bipe').classList.remove('hidden');
+      return;
+    }
+    unknownPending = '';
     openUnknownDialog(code);
     return;
   }
@@ -297,9 +311,16 @@ function openUnknownDialog(code) {
           <small>${esc(p.item.description)}</small>
         </button>`).join('')
     : '<p>Não há itens pendentes na lista.</p>';
+  const parecidos = fuzzyMatches(catalog, code);
+  const avisoParecido = parecidos.length
+    ? `<div style="background:var(--ambar-claro);color:var(--ambar);border-radius:10px;padding:10px;font-size:13px;margin-top:10px">
+        Atenção: esse código é parecido com ${parecidos.map((p) => `<strong>${esc(p.sku)}</strong> (${esc(p.ean)})`).join(' e ')} do cadastro.
+        Pode ser uma leitura imperfeita da câmera — o mais seguro é cancelar e bipar de novo.</div>`
+    : '';
   openDialog(`
     <h2>Código não cadastrado</h2>
     <p>O código <strong>${esc(code)}</strong> não está no cadastro. Ele é de qual produto?</p>
+    ${avisoParecido}
     <input id="dlg-filtro" type="search" placeholder="Buscar SKU ou nome do produto" style="margin-top:10px" />
     <div style="margin-top:10px">${opcoes}</div>
     <div class="dialogo-acoes"><button id="dlg-cancelar">Cancelar</button></div>`);
@@ -365,16 +386,13 @@ let lastTime = 0;
 let candidate = '';
 let candidateCount = 0;
 
+// Só os formatos que o fornecedor usa: menos hipóteses para o decodificador
+// significa leitura mais rápida e menos leituras erradas.
 const SCAN_FORMATS = typeof Html5QrcodeSupportedFormats !== 'undefined'
   ? [
       Html5QrcodeSupportedFormats.EAN_13,
       Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
       Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.ITF,
-      Html5QrcodeSupportedFormats.QR_CODE,
     ]
   : undefined;
 
@@ -394,7 +412,7 @@ $('#btn-scanner').addEventListener('click', async () => {
     scanner = new Html5Qrcode('reader', { formatsToSupport: SCAN_FORMATS, verbose: false });
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 260, height: 140 } },
+      { fps: 15, qrbox: (w, h) => ({ width: Math.min(320, Math.floor(w * 0.85)), height: 150 }) },
       (decoded) => {
         const now = Date.now();
         if (decoded === lastCode && now - lastTime < 2500) return;
@@ -409,7 +427,7 @@ $('#btn-scanner').addEventListener('click', async () => {
         candidateCount = 0;
         lastCode = decoded;
         lastTime = now;
-        handleCode(decoded);
+        handleCode(decoded, true);
       },
       () => {}
     );

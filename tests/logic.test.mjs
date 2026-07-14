@@ -12,6 +12,7 @@ import {
   gtinValid,
   codeVariants,
   cellToEan,
+  fuzzyMatches,
 } from '../js/logic.js';
 
 const LIST = `*FERCRIS*
@@ -165,6 +166,33 @@ test('cellToEan limpa espaços e separadores de texto comum', () => {
   assert.equal(cellToEan(' 789-1000.315507 '), '7891000315507');
   assert.equal(cellToEan(''), '');
   assert.equal(cellToEan(null), '');
+});
+
+test('fuzzyMatches detecta o caso real: misread com checksum válido por coincidência', () => {
+  const cat = { 7908278212008: { sku: 'TC72' } };
+  const m = fuzzyMatches(cat, '6901270212008');
+  assert.equal(m.length, 1);
+  assert.equal(m[0].sku, 'TC72');
+  assert.equal(m[0].dist, 3);
+});
+
+test('fuzzyMatches ignora códigos muito diferentes ou de tamanho distinto', () => {
+  const cat = { 7908278212008: { sku: 'TC72' } };
+  assert.deepEqual(fuzzyMatches(cat, '1234567890123'), []);
+  assert.deepEqual(fuzzyMatches(cat, '790827821200'), []);
+  assert.deepEqual(fuzzyMatches(cat, 'ABC123'), []);
+});
+
+test('fuzzyMatches ordena por proximidade e limita resultados', () => {
+  const cat = {
+    7908278212008: { sku: 'TC72' },
+    7908278212015: { sku: 'TC73' },
+    7908278219999: { sku: 'TC99' },
+  };
+  const m = fuzzyMatches(cat, '7908278212009');
+  assert.equal(m.length, 2);
+  assert.equal(m[0].dist, 1);
+  assert.ok(m[0].dist <= m[1].dist);
 });
 
 test('summary lista faltantes com quantidade restante', () => {

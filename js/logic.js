@@ -53,6 +53,25 @@ export function codeVariants(code) {
   return variants;
 }
 
+// Códigos do catálogo "parecidos" com o código lido (mesmo tamanho, até
+// maxDist dígitos diferentes). Usado para detectar leituras imperfeitas da
+// câmera que por coincidência têm dígito verificador válido.
+export function fuzzyMatches(catalog, code, maxDist = 3, limit = 2) {
+  const c = String(code || '').trim();
+  if (!/^\d{8,14}$/.test(c)) return [];
+  const out = [];
+  for (const [ean, v] of Object.entries(catalog)) {
+    if (ean.length !== c.length) continue;
+    let d = 0;
+    for (let i = 0; i < ean.length && d <= maxDist; i++) {
+      if (ean[i] !== c[i]) d++;
+    }
+    if (d <= maxDist) out.push({ ean, sku: v.sku, dist: d });
+  }
+  out.sort((a, b) => a.dist - b.dist);
+  return out.slice(0, limit);
+}
+
 // Converte o código lido (EAN do catálogo ou SKU digitado) em SKU, ou null.
 export function resolveSku(catalog, code, conf) {
   const c = String(code || '').trim();
