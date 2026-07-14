@@ -11,6 +11,7 @@ import {
   summary,
   gtinValid,
   codeVariants,
+  cellToEan,
 } from '../js/logic.js';
 
 const LIST = `*FERCRIS*
@@ -147,6 +148,23 @@ test('codeVariants cobre UPC-A vs EAN-13 com zero à esquerda', () => {
 test('resolveSku encontra EAN cadastrado sem o zero à esquerda', () => {
   const cat = { '0036000291452': { sku: 'DHTA02' } };
   assert.equal(resolveSku(cat, '036000291452', makeConf()), 'DHTA02');
+});
+
+test('cellToEan preserva EAN de célula numérica do Excel', () => {
+  assert.equal(cellToEan(7908278212008), '7908278212008');
+  assert.equal(cellToEan('7908278212008'), '7908278212008');
+});
+
+test('cellToEan recupera EAN de notação científica (texto exibido pelo Excel)', () => {
+  assert.equal(cellToEan('7.908278212008E+12'), '7908278212008');
+  assert.equal(cellToEan('7,908278212008E+12'), '7908278212008');
+  assert.equal(cellToEan(7.908278212008e12), '7908278212008');
+});
+
+test('cellToEan limpa espaços e separadores de texto comum', () => {
+  assert.equal(cellToEan(' 789-1000.315507 '), '7891000315507');
+  assert.equal(cellToEan(''), '');
+  assert.equal(cellToEan(null), '');
 });
 
 test('summary lista faltantes com quantidade restante', () => {

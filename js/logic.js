@@ -30,6 +30,19 @@ export function gtinValid(code) {
   return (10 - (sum % 10)) % 10 === check;
 }
 
+// Converte uma célula de planilha em código de barras íntegro.
+// Cobre células numéricas e textos em notação científica ("7,90828E+12"),
+// que corrompem o EAN quando lidos como texto exibido pelo Excel.
+export function cellToEan(v) {
+  if (typeof v === 'number') return String(Math.round(v));
+  const s = String(v ?? '').trim();
+  if (/e\+?\d+/i.test(s)) {
+    const n = Number(s.replace(',', '.'));
+    if (Number.isFinite(n)) return String(Math.round(n));
+  }
+  return s.replace(/\D/g, '');
+}
+
 // Variantes equivalentes do código: UPC-A (12 dígitos) é o EAN-13 sem o zero
 // à esquerda — cobre leitores/planilhas que divergem nesse detalhe.
 export function codeVariants(code) {

@@ -8,6 +8,7 @@ import {
   companyProgress,
   summary,
   gtinValid,
+  cellToEan,
 } from './logic.js';
 
 // ---------- Persistência ----------
@@ -299,6 +300,7 @@ function openUnknownDialog(code) {
   openDialog(`
     <h2>Código não cadastrado</h2>
     <p>O código <strong>${esc(code)}</strong> não está no cadastro. Ele é de qual produto?</p>
+    <input id="dlg-filtro" type="search" placeholder="Buscar SKU ou nome do produto" style="margin-top:10px" />
     <div style="margin-top:10px">${opcoes}</div>
     <div class="dialogo-acoes"><button id="dlg-cancelar">Cancelar</button></div>`);
   document.querySelectorAll('#dialogo .opcao-sku').forEach((b) => {
@@ -308,6 +310,14 @@ function openUnknownDialog(code) {
       save(K.catalog, catalog);
       closeDialog();
       applyScan(p.item.sku);
+    });
+  });
+  $('#dlg-filtro').addEventListener('input', () => {
+    const termo = $('#dlg-filtro').value.trim().toUpperCase();
+    document.querySelectorAll('#dialogo .opcao-sku').forEach((b) => {
+      const p = pendentes[Number(b.dataset.n)];
+      const alvo = `${p.item.sku} ${p.item.description}`.toUpperCase();
+      b.style.display = !termo || alvo.includes(termo) ? '' : 'none';
     });
   });
   $('#dlg-cancelar').addEventListener('click', closeDialog);
@@ -528,7 +538,7 @@ $('#input-planilha').addEventListener('change', async (e) => {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: 'array' });
   const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
   if (!rows.length || rows.length < 2) {
     $('#cadastro-status').textContent = 'Planilha vazia ou sem linhas de dados.';
     return;
@@ -559,10 +569,12 @@ $('#input-planilha').addEventListener('change', async (e) => {
     const eanIdx = Number($('#sel-ean').value);
     let added = 0;
     let skipped = 0;
+    let suspeitos = 0;
     for (let i = 1; i < rows.length; i++) {
       const sku = String(rows[i][skuIdx] ?? '').trim().toUpperCase();
-      const ean = onlyDigits(rows[i][eanIdx]);
+      const ean = cellToEan(rows[i][eanIdx]);
       if (!sku || ean.length < 6) { skipped++; continue; }
+      if (gtinValid(ean) === false) suspeitos++;
       if (catalog[ean]?.manual && catalog[ean].sku !== sku) continue;
       catalog[ean] = { sku };
       added++;
@@ -570,7 +582,9 @@ $('#input-planilha').addEventListener('change', async (e) => {
     save(K.catalog, catalog);
     mapa.classList.add('hidden');
     mapa.innerHTML = '';
-    $('#cadastro-status').textContent = `Importação concluída: ${added} códigos gravados${skipped ? `, ${skipped} linhas ignoradas` : ''}. Total: ${Object.keys(catalog).length}.`;
+    let msg = `Importação concluída: ${added} códigos gravados${skipped ? `, ${skipped} linhas ignoradas` : ''}. Total: ${Object.keys(catalog).length}.`;
+    if (suspeitos) msg += ` Atenção: ${suspeitos} códigos não parecem EAN válidos — confira se a coluna escolhida é mesmo a do código de barras.`;
+    $('#cadastro-status').textContent = msg;
     renderCadastroLista();
   });
 });
