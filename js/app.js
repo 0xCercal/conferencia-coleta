@@ -719,7 +719,18 @@ function renderHistorico() {
 
 // ---------- Service worker ----------
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker
+    .register('sw.js')
+    .then((reg) => reg.update())
+    .catch(() => {});
+  // Quando uma versão nova assume, recarrega uma vez para aplicá-la já.
+  const tinhaControlador = !!navigator.serviceWorker.controller;
+  let recarregou = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!tinhaControlador || recarregou) return;
+    recarregou = true;
+    location.reload();
+  });
 }
 
 // Pede ao sistema para não apagar os dados do app (cadastro, histórico).

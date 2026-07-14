@@ -1,4 +1,4 @@
-const CACHE = 'cc-v7';
+const CACHE = 'cc-v8';
 const ASSETS = [
   './',
   'index.html',
@@ -26,18 +26,36 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const fetched = fetch(e.request)
+  const sameOrigin = new URL(e.request.url).origin === self.location.origin;
+
+  if (sameOrigin) {
+    // Arquivos do app: rede primeiro (atualizações chegam na hora);
+    // cópia guardada só quando estiver sem internet.
+    e.respondWith(
+      fetch(e.request, { cache: 'no-cache' })
         .then((res) => {
-          if (res.ok || res.type === 'opaque') {
+          if (res.ok) {
             const clone = res.clone();
             caches.open(CACHE).then((c) => c.put(e.request, clone));
           }
           return res;
         })
-        .catch(() => cached);
-      return cached || fetched;
-    })
-  );
+        .catch(() => caches.match(e.request))
+    );
+  } else {
+    // Bibliotecas de CDN com versão fixa: cache primeiro.
+    e.respondWith(
+      caches.match(e.request).then(
+        (cached) =>
+          cached ||
+          fetch(e.request).then((res) => {
+            if (res.ok || res.type === 'opaque') {
+              const clone = res.clone();
+              caches.open(CACHE).then((c) => c.put(e.request, clone));
+            }
+            return res;
+          })
+      )
+    );
+  }
 });
