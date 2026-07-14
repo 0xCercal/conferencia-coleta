@@ -104,8 +104,10 @@ button:active { transform: scale(0.98); }
 .tabs button .tab-prog { display: block; font-size: 12px; font-weight: 400; opacity: 0.85; }
 
 /* Scanner */
-/* Janela da câmera compacta: sobra espaço para o zoom, o último bipe e a lista. */
-#reader { border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #000; max-height: min(46vh, 420px); }
+/* Sem cortes na janela da câmera: qualquer max-height aqui quebra a moldura
+   de leitura da biblioteca e a mira do usuário. Zoom e último bipe ficam
+   ACIMA da câmera no HTML justamente para não dependerem da altura dela. */
+#reader { border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #000; }
 .zoom-row {
   display: flex;
   align-items: center;
