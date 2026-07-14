@@ -421,14 +421,10 @@ $('#btn-scanner').addEventListener('click', async () => {
       {
         fps: 15,
         qrbox: (w, h) => ({ width: Math.min(320, Math.floor(w * 0.85)), height: 150 }),
-        // Full HD (barras finas precisam de pixels) e prévia quadrada
-        // (janela da câmera baixa, sem tomar a tela toda).
-        videoConstraints: {
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          aspectRatio: { ideal: 1 },
-        },
+        // Full HD puro: pedir aspecto quadrado junto muda o modo da câmera
+        // no iOS (imagem escura e leitura pior). A janela compacta fica por
+        // conta do corte visual no CSS (#reader com max-height).
+        videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
       },
       (decoded) => {
         const now = Date.now();
