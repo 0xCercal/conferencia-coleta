@@ -421,8 +421,14 @@ $('#btn-scanner').addEventListener('click', async () => {
       {
         fps: 15,
         qrbox: (w, h) => ({ width: Math.min(320, Math.floor(w * 0.85)), height: 150 }),
-        // Full HD: barras finas de códigos pequenos precisam de pixels.
-        videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        // Full HD (barras finas precisam de pixels) e prévia quadrada
+        // (janela da câmera baixa, sem tomar a tela toda).
+        videoConstraints: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 1 },
+        },
       },
       (decoded) => {
         const now = Date.now();
