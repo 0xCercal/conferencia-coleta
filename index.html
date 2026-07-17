@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0f6e56" />
+  <meta name="theme-color" content="#0f6e56" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#101312" media="(prefers-color-scheme: dark)" />
   <title>Conferência de Coleta</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -73,6 +74,14 @@
       <div class="card">
         <input id="cadastro-busca" type="search" placeholder="Buscar SKU ou código" />
         <ul id="cadastro-lista" class="item-list"></ul>
+      </div>
+      <div class="card">
+        <p>Tema do app</p>
+        <div id="tema-opcoes" class="zoom-cards" style="margin-top:10px;margin-bottom:0">
+          <button data-tema="auto">Automático</button>
+          <button data-tema="claro">Claro</button>
+          <button data-tema="escuro">Escuro</button>
+        </div>
       </div>
       <button id="btn-exportar-cadastro" class="btn-secondary">Exportar cadastro (backup)</button>
       <button id="btn-limpar-cadastro" class="btn-danger-ghost">Apagar todo o cadastro</button>

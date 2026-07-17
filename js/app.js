@@ -15,7 +15,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v14';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -378,7 +378,7 @@ function openUnknownDialog(code) {
     : '<p>Não há itens pendentes na lista.</p>';
   const parecidos = fuzzyMatches(catalog, code);
   const avisoParecido = parecidos.length
-    ? `<div style="background:var(--ambar-claro);color:var(--ambar);border-radius:10px;padding:10px;font-size:13px;margin-top:10px">
+    ? `<div style="background:var(--aviso-bg);color:var(--aviso-fg);border-radius:10px;padding:10px;font-size:13px;margin-top:10px">
         Atenção: esse código é parecido com ${parecidos.map((p) => `<strong>${esc(p.sku)}</strong> (${esc(p.ean)})`).join(' e ')} do cadastro.
         Pode ser uma leitura imperfeita da câmera — o mais seguro é cancelar e bipar de novo.</div>`
     : '';
@@ -811,6 +811,22 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().catch(() => {});
 }
+
+// ---------- Tema ----------
+function aplicarTema(valor) {
+  if (valor === 'auto') delete document.documentElement.dataset.tema;
+  else document.documentElement.dataset.tema = valor;
+  localStorage.setItem('cc_tema', valor);
+  document.querySelectorAll('#tema-opcoes button').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tema === valor);
+  });
+}
+
+document.querySelectorAll('#tema-opcoes button').forEach((b) => {
+  b.addEventListener('click', () => aplicarTema(b.dataset.tema));
+});
+
+aplicarTema(localStorage.getItem('cc_tema') || 'auto');
 
 // ---------- Início ----------
 $('#versao-app').textContent = `Conferência de Coleta — versão ${APP_VERSION}`;
