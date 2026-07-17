@@ -13,6 +13,8 @@ import {
   codeVariants,
   cellToEan,
   fuzzyMatches,
+  confirmExtra,
+  enrichDescriptions,
 } from '../js/logic.js';
 
 const LIST = `*FERCRIS*
@@ -54,12 +56,31 @@ test('bipe ok desconta unidade e sinaliza item completo', () => {
   assert.equal(r2.complete, true);
 });
 
-test('bipe além da quantidade vira excesso e registra em extras', () => {
+test('bipe além da quantidade vira excesso SEM registrar extra automaticamente', () => {
   const conf = makeConf();
   processScan(conf, 'DHTA02', 0);
   const r = processScan(conf, 'DHTA02', 0);
   assert.equal(r.status, 'excess');
-  assert.deepEqual(conf.extras[0], { sku: 'DHTA02', description: 'Ducha Higiênica (Tana Preta Fosca)', count: 1 });
+  assert.equal(conf.extras.length, 0);
+});
+
+test('confirmExtra registra o excedente só depois da confirmação do usuário', () => {
+  const conf = makeConf();
+  processScan(conf, 'DHTA02', 0);
+  processScan(conf, 'DHTA02', 0);
+  confirmExtra(conf, 'DHTA02', 'Ducha Higiênica (Tana Preta Fosca)');
+  confirmExtra(conf, 'DHTA02', 'Ducha Higiênica (Tana Preta Fosca)');
+  assert.deepEqual(conf.extras[0], { sku: 'DHTA02', description: 'Ducha Higiênica (Tana Preta Fosca)', count: 2 });
+});
+
+test('enrichDescriptions aprende nomes e preenche lista nova sem descrição', () => {
+  const dict = {};
+  enrichDescriptions(parseWhatsappList('*X*\n1 - AB1 Torneira Linda (Dourada)'), dict);
+  assert.equal(dict.AB1, 'Torneira Linda (Dourada)');
+  const nova = parseWhatsappList('*X*\n2 - AB1\n1 - AB2');
+  enrichDescriptions(nova, dict);
+  assert.equal(nova.companies[0].items[0].description, 'Torneira Linda (Dourada)');
+  assert.equal(nova.companies[0].items[1].description, '');
 });
 
 test('item pendente só na outra empresa retorna other-company sem marcar', () => {

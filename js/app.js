@@ -10,10 +10,12 @@ import {
   gtinValid,
   cellToEan,
   fuzzyMatches,
+  confirmExtra,
+  enrichDescriptions,
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -33,6 +35,8 @@ function save(key, value) {
 let catalog = load(K.catalog, {});
 let conf = load(K.conf, null);
 let history = load(K.hist, []);
+// Nomes de produtos aprendidos de listas antigas (a lista nova vem sem descrição).
+let descricoes = load('cc_descricoes', {});
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -77,6 +81,32 @@ function beep(ok) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + (ok ? 0.15 : 0.4));
   osc.start(t);
   osc.stop(t + (ok ? 0.15 : 0.4));
+}
+
+// Três notas subindo: som de empresa 100% conferida.
+function beepComplete() {
+  if (!audioCtx) return;
+  [660, 880, 1320].forEach((freq, i) => {
+    const t = audioCtx.currentTime + i * 0.16;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.start(t);
+    osc.stop(t + 0.15);
+  });
+}
+
+// Se a empresa chegou a 100%, celebra e retorna true.
+function celebrarSeCompleta(company) {
+  const { scanned, total } = companyProgress(company);
+  if (!total || scanned < total) return false;
+  beepComplete();
+  showUltimoBipe('ok', `🎉 ${company.name} completa! (${total}/${total})`, 'Todos os itens desta empresa foram conferidos.');
+  return true;
 }
 
 let flashTimer = null;
@@ -136,6 +166,8 @@ $('#btn-montar').addEventListener('click', () => {
 
   $('#btn-iniciar').addEventListener('click', () => {
     if (conf && !window.confirm('Já existe uma conferência em andamento. Descartar e começar outra?')) return;
+    enrichDescriptions(parsed, descricoes);
+    save('cc_descricoes', descricoes);
     conf = createConference(parsed, new Date().toISOString());
     save(K.conf, conf);
     $('#nova-texto').value = '';
@@ -161,9 +193,10 @@ function renderConferencia() {
   abas.innerHTML = '';
   conf.companies.forEach((c, idx) => {
     const { scanned, total } = companyProgress(c);
+    const pct = total ? Math.round((scanned / total) * 100) : 0;
     const b = document.createElement('button');
     b.className = idx === conf.active ? 'active' : '';
-    b.innerHTML = `${esc(c.name)}<span class="tab-prog">${scanned}/${total}</span>`;
+    b.innerHTML = `${esc(c.name)}<span class="tab-prog">${scanned}/${total}</span><span class="tab-bar"><span style="width:${pct}%"></span></span>`;
     b.addEventListener('click', () => {
       conf.active = idx;
       save(K.conf, conf);
@@ -175,7 +208,9 @@ function renderConferencia() {
   const lista = $('#conf-lista');
   lista.innerHTML = '';
   const company = conf.companies[conf.active];
-  company.items.forEach((item) => {
+  // Pendentes primeiro; conferidos descem para o fim (ordem original dentro de cada grupo).
+  const itensOrdenados = [...company.items].sort((a, b) => (a.scanned >= a.qty) - (b.scanned >= b.qty));
+  itensOrdenados.forEach((item) => {
     const li = document.createElement('li');
     li.className = item.scanned >= item.qty ? 'done' : item.scanned > 0 ? 'partial' : '';
     li.innerHTML = `
@@ -257,13 +292,37 @@ function applyScan(sku) {
 
   if (r.status === 'ok') {
     flash(true);
-    beep(true);
-    showUltimoBipe('ok', `${r.item.sku} conferido (${r.item.scanned}/${r.item.qty})${r.complete ? ' ✓ completo' : ''}`, r.item.description);
+    if (celebrarSeCompleta(r.company)) {
+      // som e aviso especiais já emitidos por celebrarSeCompleta
+    } else {
+      beep(true);
+      showUltimoBipe('ok', `${r.item.sku} conferido (${r.item.scanned}/${r.item.qty})${r.complete ? ' ✓ completo' : ''}`, r.item.description);
+    }
   } else if (r.status === 'excess') {
-    flash(false);
     beep(false);
-    const unidades = r.item.qty === 1 ? 'a única unidade' : `todas as ${r.item.qty} unidades`;
-    showUltimoBipe('erro', `${r.item.sku}: já conferiu ${unidades}`, r.item.description);
+    const unidades = r.item.qty === 1 ? 'A lista prevê 1 unidade, já conferida' : `A lista prevê ${r.item.qty} unidades, todas já conferidas`;
+    showUltimoBipe('aviso', `${r.item.sku}: bipe além do previsto`, r.item.description);
+    openDialog(`
+      <h2>Unidade além do previsto</h2>
+      <p><strong>${esc(r.item.sku)}</strong> — ${esc(r.item.description)}</p>
+      <p style="margin-top:6px">${unidades}. O que aconteceu?</p>
+      <div class="dialogo-acoes">
+        <button id="dlg-duplicado">Foi bipe duplicado — ignorar</button>
+      </div>
+      <div class="dialogo-acoes">
+        <button id="dlg-extra">Veio 1 unidade a mais — registrar</button>
+      </div>`);
+    $('#dlg-duplicado').addEventListener('click', () => {
+      closeDialog();
+      showUltimoBipe('ok', `${r.item.sku}: bipe duplicado ignorado`, r.item.description);
+    });
+    $('#dlg-extra').addEventListener('click', () => {
+      confirmExtra(conf, r.item.sku, r.item.description);
+      save(K.conf, conf);
+      closeDialog();
+      showUltimoBipe('aviso', `${r.item.sku}: 1 unidade a mais registrada`, 'Vai aparecer no resumo em "Bipados a mais".');
+      renderConferencia();
+    });
   } else if (r.status === 'not-in-list') {
     flash(false);
     beep(false);
@@ -292,8 +351,11 @@ function openOtherCompanyDialog(r) {
     closeDialog();
     if (res) {
       flash(true);
-      beep(true);
-      showUltimoBipe('ok', `${res.item.sku} conferido na ${res.company.name} (${res.item.scanned}/${res.item.qty})`, res.item.description);
+      if (!celebrarSeCompleta(res.company)) {
+        beep(true);
+        showUltimoBipe('ok', `${res.item.sku} conferido na ${res.company.name} (${res.item.scanned}/${res.item.qty})`, res.item.description);
+      }
+      $('#ultimo-bipe').classList.remove('hidden');
     }
     renderConferencia();
   });
@@ -456,14 +518,9 @@ $('#btn-scanner').addEventListener('click', async () => {
         await scanner.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] });
       }
       if (caps && caps.zoom) {
-        const slider = $('#zoom-slider');
-        slider.min = Math.max(1, caps.zoom.min || 1);
-        slider.max = Math.min(5, caps.zoom.max || 5);
-        slider.step = caps.zoom.step && caps.zoom.step >= 0.1 ? caps.zoom.step : 0.5;
+        montarCardsZoom(caps.zoom);
         const salvo = Number(localStorage.getItem('cc_zoom')) || 2;
-        slider.value = Math.min(Number(slider.max), Math.max(Number(slider.min), salvo));
-        $('#zoom-controle').classList.remove('hidden');
-        await aplicarZoom(Number(slider.value));
+        await aplicarZoom(salvo);
       }
     } catch { /* nem todo aparelho suporta; segue sem zoom */ }
   } catch (err) {
@@ -474,18 +531,36 @@ $('#btn-scanner').addEventListener('click', async () => {
   }
 });
 
-async function aplicarZoom(valor) {
-  if (!scanner || !scannerOn) return;
-  $('#zoom-valor').textContent = `${valor}x`;
-  localStorage.setItem('cc_zoom', String(valor));
-  try {
-    await scanner.applyVideoConstraints({ advanced: [{ zoom: valor }] });
-  } catch { /* aparelho sem suporte a zoom via web */ }
+// Cards de zoom: um toque por nível, na zona do polegar.
+function montarCardsZoom(capsZoom) {
+  const minZ = Math.max(1, Math.ceil(capsZoom.min || 1));
+  const maxZ = Math.min(5, Math.floor(capsZoom.max || 5));
+  const controle = $('#zoom-controle');
+  controle.innerHTML = '';
+  for (let z = minZ; z <= maxZ; z++) {
+    const b = document.createElement('button');
+    b.textContent = `${z}x`;
+    b.dataset.zoom = z;
+    b.addEventListener('click', () => aplicarZoom(z));
+    controle.appendChild(b);
+  }
+  controle.classList.remove('hidden');
 }
 
-$('#zoom-slider').addEventListener('input', () => {
-  aplicarZoom(Number($('#zoom-slider').value));
-});
+async function aplicarZoom(valor) {
+  if (!scanner || !scannerOn) return;
+  const cards = document.querySelectorAll('#zoom-controle button');
+  let efetivo = valor;
+  if (cards.length) {
+    const niveis = [...cards].map((b) => Number(b.dataset.zoom));
+    efetivo = niveis.reduce((melhor, z) => (Math.abs(z - valor) < Math.abs(melhor - valor) ? z : melhor), niveis[0]);
+    cards.forEach((b) => b.classList.toggle('active', Number(b.dataset.zoom) === efetivo));
+  }
+  localStorage.setItem('cc_zoom', String(efetivo));
+  try {
+    await scanner.applyVideoConstraints({ advanced: [{ zoom: efetivo }] });
+  } catch { /* aparelho sem suporte a zoom via web */ }
+}
 
 function stopScanner() {
   if (scanner && scannerOn) {

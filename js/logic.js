@@ -102,12 +102,30 @@ export function processScan(conf, sku, activeIdx = conf.active) {
   }
 
   if (item) {
-    addExtra(conf, sku, item.description);
+    // Não registra o excesso automaticamente: a interface pergunta antes
+    // se veio unidade a mais ou se foi bipe duplicado (confirmExtra).
     return { status: 'excess', item, company, companyIdx: activeIdx };
   }
 
   addExtra(conf, sku, '');
   return { status: 'not-in-list', sku };
+}
+
+// Confirmação do usuário de que a unidade excedente veio de verdade.
+export function confirmExtra(conf, sku, description) {
+  addExtra(conf, sku, description || '');
+}
+
+// Aprende descrições das listas que as trazem e preenche as que vierem sem
+// (o formato novo da lista é só quantidade + SKU).
+export function enrichDescriptions(parsed, dict) {
+  for (const c of parsed.companies) {
+    for (const i of c.items) {
+      if (i.description) dict[i.sku] = i.description;
+      else if (dict[i.sku]) i.description = dict[i.sku];
+    }
+  }
+  return parsed;
 }
 
 // Confirmação do caso "produto da outra empresa": marca 1 unidade lá.

@@ -102,26 +102,30 @@ button:active { transform: scale(0.98); }
 }
 .tabs button.active { background: var(--verde); color: #fff; border-color: var(--verde); }
 .tabs button .tab-prog { display: block; font-size: 12px; font-weight: 400; opacity: 0.85; }
+.tab-bar { display: block; height: 4px; border-radius: 2px; background: rgba(127, 127, 127, 0.25); margin-top: 6px; overflow: hidden; }
+.tab-bar span { display: block; height: 100%; border-radius: 2px; background: #1d9e75; }
+.tabs button.active .tab-bar span { background: #9fe1cb; }
 
 /* Scanner */
 /* Sem cortes na janela da câmera: qualquer max-height aqui quebra a moldura
    de leitura da biblioteca e a mira do usuário. Zoom e último bipe ficam
    ACIMA da câmera no HTML justamente para não dependerem da altura dela. */
 #reader { border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #000; }
-.zoom-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--card);
-  border: 1px solid var(--borda);
+/* Cards de zoom: botões grandes na zona do polegar, um toque por nível. */
+.zoom-cards { display: flex; gap: 8px; margin-bottom: 10px; }
+.zoom-cards button {
+  flex: 1;
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 600;
   border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
-  font-size: 13px;
   color: var(--texto-2);
 }
-.zoom-row input[type="range"] { flex: 1; }
-.zoom-rotulo { white-space: nowrap; }
+.zoom-cards button.active {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #fff;
+}
 .scan-controls { margin-bottom: 12px; }
 .manual-row { display: flex; gap: 8px; margin-top: 8px; }
 .manual-row input { flex: 1; }
