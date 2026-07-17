@@ -107,10 +107,16 @@ button:active { transform: scale(0.98); }
 .tabs button.active .tab-bar span { background: #9fe1cb; }
 
 /* Scanner */
-/* Sem cortes na janela da câmera: qualquer max-height aqui quebra a moldura
-   de leitura da biblioteca e a mira do usuário. Zoom e último bipe ficam
-   ACIMA da câmera no HTML justamente para não dependerem da altura dela. */
+/* Janela da câmera com altura fixa. A altura é aplicada no PRÓPRIO vídeo
+   (object-fit: cover recorta o excesso no centro) — assim a biblioteca mede
+   o vídeo já baixo e desenha a moldura de leitura no lugar certo. Nunca usar
+   max-height no container com o vídeo em altura natural: isso desalinha a
+   moldura (aprendido nas v7–v10). */
 #reader { border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #000; }
+#reader video {
+  height: min(38vh, 340px) !important;
+  object-fit: cover;
+}
 /* Cards de zoom: botões grandes na zona do polegar, um toque por nível. */
 .zoom-cards { display: flex; gap: 8px; margin-bottom: 10px; }
 .zoom-cards button {
