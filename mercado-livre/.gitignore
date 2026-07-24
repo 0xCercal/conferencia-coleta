@@ -1,0 +1,10 @@
+# Segredos e tokens — NUNCA versionar
+.env
+tokens.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/

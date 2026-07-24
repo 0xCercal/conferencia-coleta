@@ -1,0 +1,6 @@
+# Cliente HTTP
+requests>=2.31
+
+# Servidor MCP (só necessário para rodar mcp_server/server.py).
+# Instale com:  pip install "mcp[cli]"
+mcp>=1.2
