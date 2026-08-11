@@ -1,4 +1,4 @@
-const CACHE = 'cc-v19';
+const CACHE = 'cc-v20';
 const ASSETS = [
   './',
   'index.html',

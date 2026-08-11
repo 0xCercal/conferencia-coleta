@@ -118,12 +118,24 @@ html { -webkit-text-size-adjust: 100%; }
 #mascote {
   display: block;
   width: 100%;
-  max-width: 320px;
+  max-width: 168px;
   height: auto;
   margin: 0 auto 14px;
   border-radius: 12px;
   image-rendering: pixelated;
 }
+
+/* Easter egg: o bichinho miúdo no rodapé das demais abas. */
+.mascote-mini {
+  display: block;
+  width: 40px;
+  height: auto;
+  margin: 22px auto 4px;
+  border-radius: 6px;
+  opacity: 0.55;
+  image-rendering: pixelated;
+}
+.mascote-mini:active { opacity: 1; transform: scale(1.15); }
 
 .badge-teste {
   background: var(--aviso-bg);
@@ -404,4 +416,4 @@ button:active { transform: scale(0.98); }
   color: var(--texto-2);
 }
 #navbar button.active { color: var(--verde); font-weight: 600; }
-#navbar .nav-ico { display: block; font-size: 20px; margin-bottom: 2px; }
+#navbar .nav-ico { display: block; width: 20px; height: 20px; margin: 0 auto 3px; }
