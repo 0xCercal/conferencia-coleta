@@ -1,4 +1,4 @@
-const CACHE = 'cc-v21';
+const CACHE = 'cc-v22';
 const ASSETS = [
   './',
   'index.html',
@@ -6,7 +6,9 @@ const ASSETS = [
   'js/app.js',
   'js/parser.js',
   'js/logic.js',
-  'icon.svg',
+  'icon-180.png',
+  'icon-192.png',
+  'icon-512.png',
   'mascote.png',
   'manifest.webmanifest',
   'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js',
