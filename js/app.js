@@ -12,10 +12,11 @@ import {
   fuzzyMatches,
   confirmExtra,
   enrichDescriptions,
+  undoLastScan,
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v15';
+const APP_VERSION = 'v16';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -121,6 +122,8 @@ function showUltimoBipe(tipo, titulo, detalhe) {
   const el = $('#ultimo-bipe');
   el.className = tipo;
   el.innerHTML = `<strong>${esc(titulo)}</strong>${detalhe ? esc(detalhe) : ''}`;
+  el.classList.remove('hidden');
+  $('#pronto-leitor').classList.add('hidden');
 }
 
 function esc(s) {
@@ -206,11 +209,16 @@ function renderConferencia() {
     abas.appendChild(b);
   });
 
+  $('#btn-desfazer').classList.toggle('hidden', !conf.lastScan);
+
   const lista = $('#conf-lista');
   lista.innerHTML = '';
   const company = conf.companies[conf.active];
+  const filtro = $('#busca-lista').value.trim().toUpperCase();
   // Pendentes primeiro; conferidos descem para o fim (ordem original dentro de cada grupo).
-  const itensOrdenados = [...company.items].sort((a, b) => (a.scanned >= a.qty) - (b.scanned >= b.qty));
+  const itensOrdenados = [...company.items]
+    .sort((a, b) => (a.scanned >= a.qty) - (b.scanned >= b.qty))
+    .filter((i) => !filtro || `${i.sku} ${i.description}`.toUpperCase().includes(filtro));
   itensOrdenados.forEach((item) => {
     const li = document.createElement('li');
     li.className = item.scanned >= item.qty ? 'done' : item.scanned > 0 ? 'partial' : '';
@@ -410,6 +418,25 @@ function openUnknownDialog(code) {
   $('#dlg-cancelar').addEventListener('click', closeDialog);
 }
 
+$('#busca-lista').addEventListener('input', () => {
+  if (conf) renderConferencia();
+});
+
+$('#btn-desfazer').addEventListener('click', () => {
+  if (!conf) return;
+  const r = undoLastScan(conf);
+  save(K.conf, conf);
+  if (!r) {
+    showUltimoBipe('aviso', 'Nada para desfazer', '');
+  } else if (r.extra) {
+    showUltimoBipe('aviso', `${r.sku}: unidade extra desfeita`, 'Saiu do resumo de "bipados a mais".');
+  } else {
+    showUltimoBipe('aviso', `${r.item.sku} desfeito (${r.item.scanned}/${r.item.qty})`, r.item.description);
+  }
+  $('#ultimo-bipe').classList.remove('hidden');
+  renderConferencia();
+});
+
 // Entrada manual
 $('#form-manual').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -562,6 +589,11 @@ async function aplicarZoom(valor) {
     await scanner.applyVideoConstraints({ advanced: [{ zoom: efetivo }] });
   } catch { /* aparelho sem suporte a zoom via web */ }
 }
+
+// Fechar o bloco da câmera desliga a câmera.
+$('#camera-bloco').addEventListener('toggle', () => {
+  if (!$('#camera-bloco').open) stopScanner();
+});
 
 function stopScanner() {
   if (scanner && scannerOn) {

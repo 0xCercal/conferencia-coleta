@@ -37,19 +37,21 @@
       </div>
       <div id="conf-conteudo">
         <div id="conf-abas" class="tabs"></div>
-        <div id="scanner-area">
-          <div id="ultimo-bipe" class="hidden"></div>
+        <div id="ultimo-bipe" class="hidden"></div>
+        <div id="pronto-leitor">Pronto para bipar — aperte o gatilho do leitor</div>
+        <button id="btn-desfazer" class="btn-desfazer hidden">↩︎ Desfazer último bipe</button>
+        <form id="form-manual" class="manual-row">
+          <input id="input-manual" type="text" inputmode="text" autocomplete="off" placeholder="Bipe ou digite o código / SKU" />
+          <button type="submit">OK</button>
+        </form>
+        <input id="busca-lista" type="search" placeholder="Filtrar a lista por SKU ou nome" />
+        <ul id="conf-lista" class="item-list"></ul>
+        <details id="camera-bloco" class="card">
+          <summary>Usar a câmera (reserva)</summary>
           <div id="reader" class="hidden"></div>
           <div id="zoom-controle" class="zoom-cards hidden"></div>
-          <div class="scan-controls">
-            <button id="btn-scanner" class="btn-primary">Bipar com a câmera</button>
-            <form id="form-manual" class="manual-row">
-              <input id="input-manual" type="text" inputmode="text" autocomplete="off" placeholder="Digitar código ou SKU" />
-              <button type="submit">OK</button>
-            </form>
-          </div>
-        </div>
-        <ul id="conf-lista" class="item-list"></ul>
+          <button id="btn-scanner" class="btn-primary">Bipar com a câmera</button>
+        </details>
         <button id="btn-finalizar" class="btn-secondary">Ver resumo / finalizar</button>
       </div>
     </section>

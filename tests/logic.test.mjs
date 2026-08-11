@@ -15,6 +15,7 @@ import {
   fuzzyMatches,
   confirmExtra,
   enrichDescriptions,
+  undoLastScan,
 } from '../js/logic.js';
 
 const LIST = `*FERCRIS*
@@ -214,6 +215,48 @@ test('fuzzyMatches ordena por proximidade e limita resultados', () => {
   assert.equal(m.length, 2);
   assert.equal(m[0].dist, 1);
   assert.ok(m[0].dist <= m[1].dist);
+});
+
+test('undoLastScan devolve a unidade do último bipe', () => {
+  const conf = makeConf();
+  processScan(conf, 'ARLN-0103', 0);
+  processScan(conf, 'ARLN-0103', 0);
+  const r = undoLastScan(conf);
+  assert.equal(r.item.sku, 'ARLN-0103');
+  assert.equal(r.item.scanned, 1);
+  assert.equal(conf.lastScan, null);
+});
+
+test('undoLastScan não desfaz duas vezes seguidas', () => {
+  const conf = makeConf();
+  processScan(conf, 'DHTA02', 0);
+  assert.ok(undoLastScan(conf));
+  assert.equal(undoLastScan(conf), null);
+  assert.equal(conf.companies[0].items[0].scanned, 0);
+});
+
+test('undoLastScan desfaz bipe aceito na outra empresa', () => {
+  const conf = makeConf();
+  acceptOtherCompany(conf, 1, 'LEMI-0501');
+  const r = undoLastScan(conf);
+  assert.equal(r.companyIdx, 1);
+  assert.equal(conf.companies[1].items[0].scanned, 0);
+});
+
+test('undoLastScan remove a unidade extra confirmada', () => {
+  const conf = makeConf();
+  processScan(conf, 'DHTA02', 0);
+  processScan(conf, 'DHTA02', 0);
+  confirmExtra(conf, 'DHTA02', 'Ducha');
+  assert.equal(conf.extras.length, 1);
+  const r = undoLastScan(conf);
+  assert.equal(r.extra, true);
+  assert.equal(conf.extras.length, 0);
+  assert.equal(conf.companies[0].items[0].scanned, 1);
+});
+
+test('undoLastScan sem bipes retorna null', () => {
+  assert.equal(undoLastScan(makeConf()), null);
 });
 
 test('summary lista faltantes com quantidade restante', () => {

@@ -176,11 +176,38 @@ button:active { transform: scale(0.98); }
 .manual-row input { flex: 1; }
 .manual-row button { flex: 0 0 auto; }
 
-#ultimo-bipe { border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; }
-#ultimo-bipe.ok { background: var(--ok-bg); color: var(--verde); }
+/* Último bipe em destaque: legível de longe, sem precisar aproximar o celular. */
+#ultimo-bipe { border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; font-size: 15px; line-height: 1.35; }
+#ultimo-bipe.ok { background: var(--ok-bg); color: var(--ok-fg); }
 #ultimo-bipe.erro { background: var(--erro-bg); color: var(--erro-fg); }
 #ultimo-bipe.aviso { background: var(--aviso-bg); color: var(--aviso-fg); }
-#ultimo-bipe strong { display: block; }
+#ultimo-bipe strong { display: block; font-size: 21px; font-weight: 700; margin-bottom: 3px; }
+
+#pronto-leitor {
+  border: 1px dashed var(--borda);
+  border-radius: 12px;
+  padding: 16px 12px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--texto-2);
+}
+
+.btn-desfazer {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--aviso-fg);
+  border-color: var(--aviso-fg);
+  background: var(--aviso-bg);
+}
+
+#busca-lista { margin-bottom: 10px; }
+
+#camera-bloco { margin-top: 14px; }
+#camera-bloco summary { font-size: 14px; font-weight: 600; color: var(--texto-2); cursor: pointer; }
+#camera-bloco[open] summary { margin-bottom: 12px; }
 
 /* Lista de itens */
 .item-list { list-style: none; }

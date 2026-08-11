@@ -91,6 +91,7 @@ export function processScan(conf, sku, activeIdx = conf.active) {
 
   if (item && item.scanned < item.qty) {
     item.scanned++;
+    conf.lastScan = { companyIdx: activeIdx, sku };
     return { status: 'ok', item, company, companyIdx: activeIdx, complete: item.scanned === item.qty };
   }
 
@@ -115,6 +116,29 @@ export function processScan(conf, sku, activeIdx = conf.active) {
 // Confirmação do usuário de que a unidade excedente veio de verdade.
 export function confirmExtra(conf, sku, description) {
   addExtra(conf, sku, description || '');
+  conf.lastScan = { sku, extra: true };
+}
+
+// Desfaz o último bipe (unidade conferida ou excedente registrado).
+export function undoLastScan(conf) {
+  const last = conf.lastScan;
+  if (!last) return null;
+
+  if (last.extra) {
+    const ex = conf.extras.find((e) => e.sku === last.sku);
+    if (!ex) return null;
+    ex.count--;
+    if (ex.count <= 0) conf.extras = conf.extras.filter((e) => e !== ex);
+    conf.lastScan = null;
+    return { sku: last.sku, extra: true };
+  }
+
+  const company = conf.companies[last.companyIdx];
+  const item = company && company.items.find((i) => i.sku === last.sku);
+  if (!item || item.scanned <= 0) return null;
+  item.scanned--;
+  conf.lastScan = null;
+  return { item, company, companyIdx: last.companyIdx, extra: false };
 }
 
 // Aprende descrições das listas que as trazem e preenche as que vierem sem
@@ -134,6 +158,7 @@ export function acceptOtherCompany(conf, companyIdx, sku) {
   const item = conf.companies[companyIdx].items.find((i) => i.sku === sku);
   if (!item || item.scanned >= item.qty) return null;
   item.scanned++;
+  conf.lastScan = { companyIdx, sku };
   return { status: 'ok', item, company: conf.companies[companyIdx], companyIdx, complete: item.scanned === item.qty };
 }
 
