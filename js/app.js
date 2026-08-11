@@ -16,7 +16,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v21';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -238,11 +238,8 @@ function renderConferencia() {
   const lista = $('#conf-lista');
   lista.innerHTML = '';
   const company = conf.companies[conf.active];
-  const filtro = $('#busca-lista').value.trim().toUpperCase();
   // Pendentes primeiro; conferidos descem para o fim (ordem original dentro de cada grupo).
-  const itensOrdenados = [...company.items]
-    .sort((a, b) => (a.scanned >= a.qty) - (b.scanned >= b.qty))
-    .filter((i) => !filtro || `${i.sku} ${i.description}`.toUpperCase().includes(filtro));
+  const itensOrdenados = [...company.items].sort((a, b) => (a.scanned >= a.qty) - (b.scanned >= b.qty));
   itensOrdenados.forEach((item) => {
     const li = document.createElement('li');
     li.className = item.scanned >= item.qty ? 'done' : item.scanned > 0 ? 'partial' : '';
@@ -441,10 +438,6 @@ function openUnknownDialog(code) {
   });
   $('#dlg-cancelar').addEventListener('click', closeDialog);
 }
-
-$('#busca-lista').addEventListener('input', () => {
-  if (conf) renderConferencia();
-});
 
 $('#btn-desfazer').addEventListener('click', () => {
   if (!conf) return;
