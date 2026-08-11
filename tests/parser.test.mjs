@@ -66,6 +66,43 @@ test('linhas não reconhecidas vão para unparsed', () => {
   assert.deepEqual(unparsed, ['observação solta']);
 });
 
+test('cabeçalho com data ao lado é reconhecido e a data é capturada', () => {
+  const { companies, unparsed } = parseWhatsappList(`*FERCRIS* — 11/08/2026
+1 - TB119
+2 - TC70
+
+*CERCAL* — 11/08/2026
+5 -  TC72
+8 -  TECB02`);
+  assert.equal(companies.length, 2);
+  assert.equal(companies[0].name, 'FERCRIS');
+  assert.equal(companies[0].date, '11/08/2026');
+  assert.equal(companies[1].name, 'CERCAL');
+  assert.equal(companies[1].items.find((i) => i.sku === 'TC72').qty, 5);
+  assert.equal(unparsed.length, 0);
+});
+
+test('cabeçalho aceita outros sufixos e separadores de data', () => {
+  const variantes = [
+    '*FERCRIS* 11/08/2026',
+    '*FERCRIS* - 11-08-2026',
+    '*FERCRIS*: 11.08.26',
+    '*FERCRIS* (coleta da manhã)',
+  ];
+  for (const cabecalho of variantes) {
+    const { companies } = parseWhatsappList(`${cabecalho}\n1 - TB119`);
+    assert.equal(companies[0].name, 'FERCRIS', cabecalho);
+    assert.equal(companies[0].items.length, 1, cabecalho);
+  }
+});
+
+test('espaços extras depois do hífen não quebram o item', () => {
+  const { companies } = parseWhatsappList('*X*\n1 -  AMQD-0501-DA\n3 -   DD14');
+  assert.equal(companies[0].items[0].sku, 'AMQD-0501-DA');
+  assert.equal(companies[0].items[1].sku, 'DD14');
+  assert.equal(companies[0].items[1].qty, 3);
+});
+
 test('itens sem cabeçalho de empresa caem no grupo GERAL', () => {
   const { companies } = parseWhatsappList('1 - AB1 Coisa');
   assert.equal(companies[0].name, 'GERAL');

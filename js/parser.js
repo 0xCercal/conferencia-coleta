@@ -11,9 +11,14 @@ export function parseWhatsappList(text) {
     const line = raw.trim();
     if (!line) continue;
 
-    const companyMatch = line.match(/^\*{1,2}\s*([^*]+?)\s*\*{1,2}$/);
+    // Cabeçalho da empresa: aceita sufixo depois do asterisco, como a data
+    // em "*FERCRIS* — 11/08/2026".
+    const companyMatch = line.match(/^\*{1,2}\s*([^*]+?)\s*\*{1,2}\s*(?:[-–—:]\s*)?(.*)$/);
     if (companyMatch) {
       current = { name: companyMatch[1].toUpperCase(), items: [] };
+      const sufixo = companyMatch[2].trim();
+      const data = sufixo.match(/\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}/);
+      if (data) current.date = data[0];
       companies.push(current);
       continue;
     }

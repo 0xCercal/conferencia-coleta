@@ -8,6 +8,7 @@ export function createConference(parsed, startedAt) {
     extras: [],
     companies: parsed.companies.map((c) => ({
       name: c.name,
+      date: c.date || '',
       items: c.items.map((i) => ({ sku: i.sku, description: i.description, qty: i.qty, scanned: 0 })),
     })),
   };

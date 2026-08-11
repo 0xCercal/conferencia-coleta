@@ -15,7 +15,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v14';
+const APP_VERSION = 'v15';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -158,7 +158,8 @@ $('#btn-montar').addEventListener('click', () => {
   }
   for (const c of parsed.companies) {
     const units = c.items.reduce((s, i) => s + i.qty, 0);
-    html += `<div class="empresa-resumo"><strong>${esc(c.name)}</strong> — ${c.items.length} produtos, ${units} unidades</div>`;
+    const data = c.date ? ` · ${esc(c.date)}` : '';
+    html += `<div class="empresa-resumo"><strong>${esc(c.name)}</strong>${data} — ${c.items.length} produtos, ${units} unidades</div>`;
   }
   html += '<button id="btn-iniciar" class="btn-primary">Iniciar conferência</button>';
   preview.classList.remove('hidden');
