@@ -52,6 +52,25 @@
   --sombra: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+/* Tema terminal claro: mesma estrutura, paleta de papel. */
+:root[data-tema="terminal-claro"] {
+  --verde: #b5522f;
+  --texto: #2a251d;
+  --texto-2: #6f675b;
+  --borda: #ddd4c2;
+  --fundo: #f4efe4;
+  --card: #fffdf7;
+  --ok-bg: #e2f0e4;
+  --ok-fg: #1f6b45;
+  --erro-bg: #fbe6e2;
+  --erro-fg: #9e3520;
+  --aviso-bg: #f8eed6;
+  --aviso-fg: #85601a;
+  --sombra: none;
+  --fonte: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --raio: 4px;
+}
+
 /* Tema terminal: fonte monoespaçada e paleta de console. */
 :root[data-tema="terminal"] {
   --verde: #d97757;
@@ -71,22 +90,27 @@
   --raio: 4px;
 }
 
-:root[data-tema="terminal"] h1::before,
-:root[data-tema="terminal"] #dialogo h2::before { content: "> "; color: var(--verde); }
-:root[data-tema="terminal"] .item-list li,
-:root[data-tema="terminal"] .card,
-:root[data-tema="terminal"] button,
-:root[data-tema="terminal"] textarea,
-:root[data-tema="terminal"] input,
-:root[data-tema="terminal"] #ultimo-bipe,
-:root[data-tema="terminal"] #pronto-leitor,
-:root[data-tema="terminal"] #reader { border-radius: var(--raio); }
-:root[data-tema="terminal"] .item-list li .item-sku::before { content: "$ "; color: var(--texto-2); }
-:root[data-tema="terminal"] #mascote { display: block; }
+/* Estrutura comum aos dois temas de terminal. */
+:root[data-tema^="terminal"] h1::before,
+:root[data-tema^="terminal"] #dialogo h2::before { content: "> "; color: var(--verde); }
+:root[data-tema^="terminal"] .item-list li,
+:root[data-tema^="terminal"] .card,
+:root[data-tema^="terminal"] button,
+:root[data-tema^="terminal"] textarea,
+:root[data-tema^="terminal"] input,
+:root[data-tema^="terminal"] #ultimo-bipe,
+:root[data-tema^="terminal"] #pronto-leitor,
+:root[data-tema^="terminal"] #reader { border-radius: var(--raio); }
+:root[data-tema^="terminal"] .item-list li .item-sku::before { content: "$ "; color: var(--texto-2); }
+:root[data-tema^="terminal"] #mascote { display: block; }
 :root[data-tema="terminal"] .btn-primary,
 :root[data-tema="terminal"] .file-label,
 :root[data-tema="terminal"] .tabs button.active,
 :root[data-tema="terminal"] .zoom-cards button.active { color: #16140f; }
+:root[data-tema="terminal-claro"] .btn-primary,
+:root[data-tema="terminal-claro"] .file-label,
+:root[data-tema="terminal-claro"] .tabs button.active,
+:root[data-tema="terminal-claro"] .zoom-cards button.active { color: #fffdf7; }
 
 html { -webkit-text-size-adjust: 100%; }
 

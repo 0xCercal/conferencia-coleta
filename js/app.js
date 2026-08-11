@@ -16,7 +16,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v17';
+const APP_VERSION = 'v18';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -664,9 +664,18 @@ $('#btn-finalizar').addEventListener('click', () => {
     <div class="dialogo-acoes">
       <button id="dlg-voltar">Voltar</button>
       <button id="dlg-salvar" class="btn-primary" style="margin-top:0">${conf.isTest ? 'Encerrar teste' : 'Finalizar e salvar'}</button>
-    </div>`;
+    </div>
+    <button id="dlg-descartar" class="btn-danger-ghost" style="margin-top:10px">Descartar conferência</button>`;
   openDialog(html);
   $('#dlg-voltar').addEventListener('click', closeDialog);
+  $('#dlg-descartar').addEventListener('click', () => {
+    if (!window.confirm('Descartar esta conferência? Tudo que foi bipado será perdido e nada será salvo no histórico.')) return;
+    conf = null;
+    save(K.conf, conf);
+    closeDialog();
+    stopScanner();
+    goto('nova');
+  });
   $('#dlg-salvar').addEventListener('click', () => {
     const eraTeste = conf.isTest;
     if (!eraTeste) {
