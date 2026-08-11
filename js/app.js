@@ -16,7 +16,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v16';
+const APP_VERSION = 'v17';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -181,6 +181,29 @@ $('#btn-montar').addEventListener('click', () => {
   });
 });
 
+// ---------- Conferência de teste ----------
+// Lista fictícia com SKUs reais do fornecedor: dá para bipar produtos de
+// verdade sem sujar o histórico.
+const LISTA_TESTE = `*FERCRIS* — teste
+1 - TB119 Torneira Monocomando Alta para Banheiro
+2 - TC70 Torneira Monocomando Gourmet de Cozinha
+1 - DD14 Dosador para Detergente Embutido Inox 500 ml
+
+*CERCAL* — teste
+3 - TC72 Torneira Monocomando Gourmet de Cozinha Inox (Maldivas Escovada)
+1 - VC07 Válvula Click de Inox para Cubas (Cromada)`;
+
+$('#btn-teste').addEventListener('click', () => {
+  if (conf && !window.confirm('Já existe uma conferência em andamento. Descartar e começar o teste?')) return;
+  const parsed = enrichDescriptions(parseWhatsappList(LISTA_TESTE), descricoes);
+  conf = createConference(parsed, new Date().toISOString());
+  conf.isTest = true;
+  save(K.conf, conf);
+  $('#nova-preview').classList.add('hidden');
+  $('#nova-preview').innerHTML = '';
+  goto('conferencia');
+});
+
 // ---------- Conferência ----------
 function renderConferencia() {
   const vazia = $('#conf-vazia');
@@ -192,6 +215,7 @@ function renderConferencia() {
   }
   vazia.classList.add('hidden');
   conteudo.classList.remove('hidden');
+  $('#badge-teste').classList.toggle('hidden', !conf.isTest);
 
   const abas = $('#conf-abas');
   abas.innerHTML = '';
@@ -633,21 +657,27 @@ $('#btn-finalizar').addEventListener('click', () => {
   if (s.extras.length) {
     html += `<div class="resumo-secao"><h3>Bipados a mais</h3><ul>${s.extras.map((x) => `<li class="extra"><strong>${esc(x.sku)}</strong> ${x.count}x a mais</li>`).join('')}</ul></div>`;
   }
+  if (conf.isTest) {
+    html += '<p class="hint" style="margin-top:10px">Conferência de teste: o resultado não será salvo no histórico.</p>';
+  }
   html += `
     <div class="dialogo-acoes">
       <button id="dlg-voltar">Voltar</button>
-      <button id="dlg-salvar" class="btn-primary" style="margin-top:0">Finalizar e salvar</button>
+      <button id="dlg-salvar" class="btn-primary" style="margin-top:0">${conf.isTest ? 'Encerrar teste' : 'Finalizar e salvar'}</button>
     </div>`;
   openDialog(html);
   $('#dlg-voltar').addEventListener('click', closeDialog);
   $('#dlg-salvar').addEventListener('click', () => {
-    history.unshift({ startedAt: conf.startedAt, finishedAt: new Date().toISOString(), resultado: s });
-    save(K.hist, history);
+    const eraTeste = conf.isTest;
+    if (!eraTeste) {
+      history.unshift({ startedAt: conf.startedAt, finishedAt: new Date().toISOString(), resultado: s });
+      save(K.hist, history);
+    }
     conf = null;
     save(K.conf, conf);
     closeDialog();
     stopScanner();
-    goto('historico');
+    goto(eraTeste ? 'nova' : 'historico');
   });
 });
 

@@ -52,10 +52,68 @@
   --sombra: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+/* Tema terminal: fonte monoespaçada e paleta de console. */
+:root[data-tema="terminal"] {
+  --verde: #d97757;
+  --texto: #e9e5df;
+  --texto-2: #9c958a;
+  --borda: #38332c;
+  --fundo: #16140f;
+  --card: #201d17;
+  --ok-bg: #14291f;
+  --ok-fg: #7fd1a3;
+  --erro-bg: #2e1917;
+  --erro-fg: #f0857d;
+  --aviso-bg: #2d2413;
+  --aviso-fg: #e3b562;
+  --sombra: none;
+  --fonte: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --raio: 4px;
+}
+
+:root[data-tema="terminal"] h1::before,
+:root[data-tema="terminal"] #dialogo h2::before { content: "> "; color: var(--verde); }
+:root[data-tema="terminal"] .item-list li,
+:root[data-tema="terminal"] .card,
+:root[data-tema="terminal"] button,
+:root[data-tema="terminal"] textarea,
+:root[data-tema="terminal"] input,
+:root[data-tema="terminal"] #ultimo-bipe,
+:root[data-tema="terminal"] #pronto-leitor,
+:root[data-tema="terminal"] #reader { border-radius: var(--raio); }
+:root[data-tema="terminal"] .item-list li .item-sku::before { content: "$ "; color: var(--texto-2); }
+:root[data-tema="terminal"] #mascote { display: block; }
+:root[data-tema="terminal"] .btn-primary,
+:root[data-tema="terminal"] .file-label,
+:root[data-tema="terminal"] .tabs button.active,
+:root[data-tema="terminal"] .zoom-cards button.active { color: #16140f; }
+
 html { -webkit-text-size-adjust: 100%; }
 
+#mascote {
+  display: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--verde);
+  margin-bottom: 14px;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.badge-teste {
+  background: var(--aviso-bg);
+  color: var(--aviso-fg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--fonte, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   background: var(--fundo);
   color: var(--texto);
   /* Área segura do iPhone: não deixa o relógio/notch cobrir o conteúdo. */
@@ -156,8 +214,10 @@ button:active { transform: scale(0.98); }
   height: min(38vh, 340px) !important;
   object-fit: cover;
 }
-/* Cards de zoom: botões grandes na zona do polegar, um toque por nível. */
-.zoom-cards { display: flex; gap: 8px; margin-bottom: 10px; }
+/* Cards de zoom: botões grandes na zona do polegar, um toque por nível.
+   Também usados pelo seletor de tema, que tem 4 opções e pode quebrar linha. */
+.zoom-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.zoom-cards button { min-width: 72px; }
 .zoom-cards button {
   flex: 1;
   padding: 14px 0;

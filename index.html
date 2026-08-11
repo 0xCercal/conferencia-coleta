@@ -22,11 +22,17 @@
 
     <!-- Tela: Nova conferência -->
     <section id="view-nova" class="view">
+      <pre id="mascote" aria-hidden="true">   ___
+  [o_o]   conferencia-coleta
+  |[+]|   pronto para bipar
+  /|_|\</pre>
       <h1>Nova conferência</h1>
       <p class="hint">Cole abaixo a mensagem do WhatsApp com a lista de coleta.</p>
       <textarea id="nova-texto" rows="12" placeholder="*FERCRIS*&#10;1 - SGR-0501 Sifão de Inox...&#10;&#10;*CERCAL*&#10;1 - LEMI-0501 Lixeira..."></textarea>
       <div id="nova-preview" class="hidden"></div>
       <button id="btn-montar" class="btn-primary">Montar checklist</button>
+      <button id="btn-teste" class="btn-secondary">Iniciar conferência de teste</button>
+      <p class="hint" style="margin-top:8px">A conferência de teste usa uma lista fictícia e não entra no histórico.</p>
     </section>
 
     <!-- Tela: Conferência -->
@@ -36,6 +42,7 @@
         <button class="btn-primary" data-goto="nova">Iniciar nova conferência</button>
       </div>
       <div id="conf-conteudo">
+          <div id="badge-teste" class="badge-teste hidden">MODO TESTE — não vai para o histórico</div>
         <div id="conf-abas" class="tabs"></div>
         <div id="ultimo-bipe" class="hidden"></div>
         <div id="pronto-leitor">Pronto para bipar — aperte o gatilho do leitor</div>
@@ -83,6 +90,7 @@
           <button data-tema="auto">Automático</button>
           <button data-tema="claro">Claro</button>
           <button data-tema="escuro">Escuro</button>
+          <button data-tema="terminal">Terminal</button>
         </div>
       </div>
       <button id="btn-exportar-cadastro" class="btn-secondary">Exportar cadastro (backup)</button>
