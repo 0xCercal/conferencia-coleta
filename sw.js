@@ -1,4 +1,4 @@
-const CACHE = 'cc-v18';
+const CACHE = 'cc-v19';
 const ASSETS = [
   './',
   'index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   'js/parser.js',
   'js/logic.js',
   'icon.svg',
+  'mascote.png',
   'manifest.webmanifest',
   'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
