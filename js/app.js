@@ -16,7 +16,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -689,7 +689,33 @@ function renderCadastro() {
   $('#cadastro-status').textContent = count
     ? `${count} códigos cadastrados.`
     : 'Nenhum código cadastrado ainda. Importe a planilha do fornecedor (colunas com SKU e código de barras).';
+  renderAvisoBackup();
   renderCadastroLista();
+}
+
+// O armazenamento do app na tela de início é apagado se o app for removido
+// de lá. O aviso cobra um backup enquanto ainda dá tempo.
+const DIAS_BACKUP = 7;
+
+function renderAvisoBackup() {
+  const el = $('#aviso-backup');
+  const count = Object.keys(catalog).length;
+  if (!count) {
+    el.classList.add('hidden');
+    return;
+  }
+  const ultimo = Number(localStorage.getItem('cc_ultimo_backup')) || 0;
+  const dias = ultimo ? Math.floor((Date.now() - ultimo) / 86400000) : null;
+  if (dias !== null && dias < DIAS_BACKUP) {
+    el.classList.add('hidden');
+    return;
+  }
+  el.innerHTML = `<strong>Faça um backup do cadastro</strong>${
+    dias === null
+      ? 'Nenhum backup foi exportado ainda. '
+      : `Último backup há ${dias} dias. `
+  }Se o app for removido da tela de início, o iPhone apaga cadastro e histórico junto. Toque em "Exportar cadastro (backup)" e guarde o arquivo.`;
+  el.classList.remove('hidden');
 }
 
 function renderCadastroLista() {
@@ -717,7 +743,7 @@ $('#btn-exportar-cadastro').addEventListener('click', () => {
     $('#cadastro-status').textContent = 'Nada para exportar: o cadastro está vazio.';
     return;
   }
-  const csv = 'SKU;CODIGO_BARRAS\n' + entries.map(([ean, v]) => `${v.sku};${ean}`).join('\n');
+  const csv = 'SKU;CODIGO_BARRAS\n' + entries.map(([ean, v]) => `${v.sku};${ean}${v.manual ? ';manual' : ''}`).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -726,6 +752,34 @@ $('#btn-exportar-cadastro').addEventListener('click', () => {
   a.click();
   a.remove();
   URL.revokeObjectURL(a.href);
+  localStorage.setItem('cc_ultimo_backup', String(Date.now()));
+  renderAvisoBackup();
+});
+
+// Restauração do backup gerado pelo próprio app: formato conhecido, sem
+// diálogo de mapeamento de colunas.
+$('#input-backup').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  const texto = await file.text();
+  const linhas = texto.split(/\r?\n/).filter((l) => l.trim());
+  if (!linhas.length || !/sku/i.test(linhas[0])) {
+    $('#cadastro-status').textContent = 'Arquivo não reconhecido. Use um arquivo gerado por "Exportar cadastro (backup)".';
+    return;
+  }
+  let add = 0;
+  for (const linha of linhas.slice(1)) {
+    const [sku, ean, marca] = linha.split(';').map((p) => (p || '').trim());
+    const codigo = onlyDigits(ean);
+    if (!sku || codigo.length < 6) continue;
+    catalog[codigo] = marca === 'manual' ? { sku: sku.toUpperCase(), manual: true } : { sku: sku.toUpperCase() };
+    add++;
+  }
+  save(K.catalog, catalog);
+  $('#cadastro-status').textContent = `Backup restaurado: ${add} códigos. Total: ${Object.keys(catalog).length}.`;
+  renderAvisoBackup();
+  renderCadastroLista();
 });
 
 $('#btn-limpar-cadastro').addEventListener('click', () => {

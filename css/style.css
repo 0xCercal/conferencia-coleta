@@ -137,6 +137,17 @@ html { -webkit-text-size-adjust: 100%; }
 }
 .mascote-mini:active { opacity: 1; transform: scale(1.15); }
 
+.aviso-backup {
+  background: var(--aviso-bg);
+  color: var(--aviso-fg);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.aviso-backup strong { display: block; margin-bottom: 3px; }
+
 .badge-teste {
   background: var(--aviso-bg);
   color: var(--aviso-fg);

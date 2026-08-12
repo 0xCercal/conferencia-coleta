@@ -64,6 +64,7 @@
     <section id="view-cadastro" class="view hidden">
       <h1>Cadastro de produtos</h1>
       <p class="hint">Relação SKU ↔ código de barras do fornecedor. Importe a planilha exportada ou cole o texto.</p>
+      <div id="aviso-backup" class="aviso-backup hidden"></div>
       <div class="card">
         <p id="cadastro-status"></p>
         <label class="file-label">
@@ -92,6 +93,10 @@
         </div>
       </div>
       <button id="btn-exportar-cadastro" class="btn-secondary">Exportar cadastro (backup)</button>
+      <label class="file-label" style="background:transparent;color:var(--texto);border:1px solid var(--borda)">
+        Restaurar backup (.csv)
+        <input id="input-backup" type="file" accept=".csv,text/csv" hidden />
+      </label>
       <button id="btn-limpar-cadastro" class="btn-danger-ghost">Apagar todo o cadastro</button>
       <p id="versao-app" class="versao"></p>
       <img class="mascote-mini" src="mascote.png" alt="" aria-hidden="true" />
