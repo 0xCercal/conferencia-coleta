@@ -174,15 +174,19 @@ body {
 h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
 .hint { font-size: 14px; color: var(--texto-2); margin-bottom: 12px; }
 
-textarea, input[type="text"], input[type="search"] {
+textarea, input[type="text"], input[type="search"], select {
   width: 100%;
   font-size: 16px;
   padding: 10px;
   border: 1px solid var(--borda);
   border-radius: 10px;
   background: var(--card);
+  /* Sem isto os campos usam o preto padrão do navegador e o texto some
+     nos temas escuros. */
+  color: var(--texto);
   font-family: inherit;
 }
+textarea::placeholder, input::placeholder { color: var(--texto-2); opacity: 1; }
 textarea { resize: vertical; }
 
 button {

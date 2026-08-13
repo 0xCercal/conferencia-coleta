@@ -16,7 +16,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v25';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
