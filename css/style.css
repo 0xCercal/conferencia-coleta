@@ -102,7 +102,7 @@
 :root[data-tema^="terminal"] #pronto-leitor,
 :root[data-tema^="terminal"] #mascote,
 :root[data-tema^="terminal"] #reader { border-radius: var(--raio); }
-:root[data-tema^="terminal"] .item-list li .item-sku::before { content: "$ "; color: var(--texto-2); }
+:root[data-tema^="terminal"] .item-list li .item-sku::before { content: "> "; color: var(--texto-2); }
 :root[data-tema="terminal"] .btn-primary,
 :root[data-tema="terminal"] .file-label,
 :root[data-tema="terminal"] .tabs button.active,
