@@ -336,6 +336,17 @@ button:active { transform: scale(0.98); }
 .item-list li .item-sku { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
 .item-list li .item-desc { color: var(--texto-2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
 .item-list li .item-count { font-weight: 600; white-space: nowrap; }
+.btn-apagar-codigo {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--erro-fg);
+  border-color: var(--borda);
+  background: transparent;
+}
+.btn-apagar-codigo:active { background: var(--erro-bg); }
+
 .item-list li.done { opacity: 0.55; }
 .item-list li.done .item-desc, .item-list li.done .item-sku { text-decoration: line-through; }
 .item-list li.partial { border-color: var(--aviso-fg); }

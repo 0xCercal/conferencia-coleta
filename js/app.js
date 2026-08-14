@@ -18,7 +18,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v26';
+const APP_VERSION = 'v27';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -288,9 +288,13 @@ function openItemDialog(companyIdx, sku) {
 // ---------- Bipagem ----------
 let unknownPending = '';
 let unknownPendingTime = 0;
+// Associação código↔SKU criada pelo último bipe, para o desfazer poder apagá-la.
+let ultimaAssociacao = null;
 
 function handleCode(code, fromCamera = false) {
   if (!conf) return;
+  // Bipe novo: a associação anterior deixa de ser a "última".
+  ultimaAssociacao = null;
   if (gtinValid(code) === false) {
     flash(false);
     beep(false);
@@ -424,8 +428,11 @@ function openUnknownDialog(code) {
   document.querySelectorAll('#dialogo .opcao-sku').forEach((b) => {
     b.addEventListener('click', () => {
       const p = pendentes[Number(b.dataset.n)];
-      catalog[String(code).trim()] = { sku: p.item.sku, manual: true };
+      const codigo = String(code).trim();
+      catalog[codigo] = { sku: p.item.sku, manual: true };
       save(K.catalog, catalog);
+      // Guardado para que o desfazer possa apagar a associação recém-criada.
+      ultimaAssociacao = { codigo, sku: p.item.sku };
       closeDialog();
       applyScan(p.item.sku);
     });
@@ -443,6 +450,7 @@ function openUnknownDialog(code) {
 
 $('#btn-desfazer').addEventListener('click', () => {
   if (!conf) return;
+  const associacao = ultimaAssociacao;
   const r = undoLastScan(conf);
   save(K.conf, conf);
   if (!r) {
@@ -450,8 +458,17 @@ $('#btn-desfazer').addEventListener('click', () => {
   } else if (r.extra) {
     showUltimoBipe('aviso', `${r.sku}: unidade extra desfeita`, 'Saiu do resumo de "bipados a mais".');
   } else {
-    showUltimoBipe('aviso', `${r.item.sku} desfeito (${r.item.scanned}/${r.item.qty})`, r.item.description);
+    let detalhe = r.item.description;
+    // O bipe veio de uma associação criada agora: apaga junto, senão o
+    // código erradamente associado continuaria valendo para sempre.
+    if (associacao && associacao.sku === r.item.sku && catalog[associacao.codigo]) {
+      delete catalog[associacao.codigo];
+      save(K.catalog, catalog);
+      detalhe = `Associação do código ${associacao.codigo} também foi apagada.`;
+    }
+    showUltimoBipe('aviso', `${r.item.sku} desfeito (${r.item.scanned}/${r.item.qty})`, detalhe);
   }
+  ultimaAssociacao = null;
   $('#ultimo-bipe').classList.remove('hidden');
   renderConferencia();
 });
@@ -733,8 +750,21 @@ function renderCadastroLista() {
           <div class="item-sku">${esc(v.sku)}${v.manual ? ' · manual' : ''}</div>
           <div class="item-desc">${esc(ean)}</div>
         </div>
+        <button class="btn-apagar-codigo" data-ean="${esc(ean)}" aria-label="Apagar ${esc(v.sku)}">✕</button>
       </li>`)
     .join('') || '<li><div class="item-info"><div class="item-desc">Nada encontrado.</div></div></li>';
+
+  lista.querySelectorAll('.btn-apagar-codigo').forEach((b) => {
+    b.addEventListener('click', () => {
+      const ean = b.dataset.ean;
+      const sku = catalog[ean] && catalog[ean].sku;
+      if (!window.confirm(`Apagar o código ${ean} (${sku})? O app voltará a perguntar o produto quando ele for bipado.`)) return;
+      delete catalog[ean];
+      save(K.catalog, catalog);
+      $('#cadastro-status').textContent = `Código ${ean} apagado. Total: ${Object.keys(catalog).length}.`;
+      renderCadastroLista();
+    });
+  });
 }
 
 $('#cadastro-busca').addEventListener('input', renderCadastroLista);
