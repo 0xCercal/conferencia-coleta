@@ -16,6 +16,8 @@ import {
   confirmExtra,
   enrichDescriptions,
   undoLastScan,
+  isSkuOutlet,
+  limparOutlet,
 } from '../js/logic.js';
 
 const LIST = `*FERCRIS*
@@ -257,6 +259,40 @@ test('undoLastScan remove a unidade extra confirmada', () => {
 
 test('undoLastScan sem bipes retorna null', () => {
   assert.equal(undoLastScan(makeConf()), null);
+});
+
+test('isSkuOutlet reconhece SKUs terminados em OR, sem diferenciar maiúsculas', () => {
+  assert.equal(isSkuOutlet('TC72OR'), true);
+  assert.equal(isSkuOutlet('tc72or'), true);
+  assert.equal(isSkuOutlet('AMQD-0501-OR'), true);
+  assert.equal(isSkuOutlet(' TB119OR '), true);
+});
+
+test('isSkuOutlet não confunde SKUs normais', () => {
+  assert.equal(isSkuOutlet('TC72'), false);
+  assert.equal(isSkuOutlet('ARLN-0103'), false);
+  assert.equal(isSkuOutlet('PXDOTARG'), false);
+  assert.equal(isSkuOutlet('ORL01'), false);
+  assert.equal(isSkuOutlet(''), false);
+  assert.equal(isSkuOutlet(null), false);
+});
+
+test('limparOutlet remove só os códigos de outlet e devolve os removidos', () => {
+  const cat = {
+    7908278212008: { sku: 'TC72' },
+    7908278212015: { sku: 'TC72OR' },
+    7891000315507: { sku: 'TB119', manual: true },
+    7891000315514: { sku: 'tb119or' },
+  };
+  const removidos = limparOutlet(cat);
+  assert.deepEqual(removidos.sort(), ['7891000315514', '7908278212015']);
+  assert.deepEqual(Object.keys(cat).sort(), ['7891000315507', '7908278212008']);
+});
+
+test('limparOutlet não altera catálogo sem outlet', () => {
+  const cat = { 7908278212008: { sku: 'TC72' } };
+  assert.deepEqual(limparOutlet(cat), []);
+  assert.equal(Object.keys(cat).length, 1);
 });
 
 test('summary lista faltantes com quantidade restante', () => {

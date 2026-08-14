@@ -31,6 +31,24 @@ export function gtinValid(code) {
   return (10 - (sum % 10)) % 10 === check;
 }
 
+// SKUs de outlet terminam em "OR" e dividem o código de barras com o SKU
+// normal. Como o cadastro guarda um SKU por código, eles são descartados.
+export function isSkuOutlet(sku) {
+  return /or$/i.test(String(sku || '').trim());
+}
+
+// Remove do catálogo os códigos gravados com SKU de outlet.
+export function limparOutlet(catalog) {
+  const removidos = [];
+  for (const [ean, v] of Object.entries(catalog)) {
+    if (isSkuOutlet(v && v.sku)) {
+      removidos.push(ean);
+      delete catalog[ean];
+    }
+  }
+  return removidos;
+}
+
 // Converte uma célula de planilha em código de barras íntegro.
 // Cobre células numéricas e textos em notação científica ("7,90828E+12"),
 // que corrompem o EAN quando lidos como texto exibido pelo Excel.

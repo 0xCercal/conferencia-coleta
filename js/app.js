@@ -13,10 +13,12 @@ import {
   confirmExtra,
   enrichDescriptions,
   undoLastScan,
+  isSkuOutlet,
+  limparOutlet,
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v25';
+const APP_VERSION = 'v26';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -687,7 +689,7 @@ $('#btn-finalizar').addEventListener('click', () => {
 function renderCadastro() {
   const count = Object.keys(catalog).length;
   $('#cadastro-status').textContent = count
-    ? `${count} códigos cadastrados.`
+    ? `${count} códigos cadastrados.${outletRemovidos ? ` ${outletRemovidos} códigos de outlet foram removidos nesta versão.` : ''}`
     : 'Nenhum código cadastrado ainda. Importe a planilha do fornecedor (colunas com SKU e código de barras).';
   renderAvisoBackup();
   renderCadastroLista();
@@ -769,15 +771,17 @@ $('#input-backup').addEventListener('change', async (e) => {
     return;
   }
   let add = 0;
+  let outlet = 0;
   for (const linha of linhas.slice(1)) {
     const [sku, ean, marca] = linha.split(';').map((p) => (p || '').trim());
     const codigo = onlyDigits(ean);
     if (!sku || codigo.length < 6) continue;
+    if (isSkuOutlet(sku)) { outlet++; continue; }
     catalog[codigo] = marca === 'manual' ? { sku: sku.toUpperCase(), manual: true } : { sku: sku.toUpperCase() };
     add++;
   }
   save(K.catalog, catalog);
-  $('#cadastro-status').textContent = `Backup restaurado: ${add} códigos. Total: ${Object.keys(catalog).length}.`;
+  $('#cadastro-status').textContent = `Backup restaurado: ${add} códigos${outlet ? `, ${outlet} de outlet descartados` : ''}. Total: ${Object.keys(catalog).length}.`;
   renderAvisoBackup();
   renderCadastroLista();
 });
@@ -837,10 +841,13 @@ $('#input-planilha').addEventListener('change', async (e) => {
     let added = 0;
     let skipped = 0;
     let suspeitos = 0;
+    let outlet = 0;
     for (let i = 1; i < rows.length; i++) {
       const sku = String(rows[i][skuIdx] ?? '').trim().toUpperCase();
       const ean = cellToEan(rows[i][eanIdx]);
       if (!sku || ean.length < 6) { skipped++; continue; }
+      // Outlet divide o código com o SKU normal e atrapalharia a bipagem.
+      if (isSkuOutlet(sku)) { outlet++; continue; }
       if (gtinValid(ean) === false) suspeitos++;
       if (catalog[ean]?.manual && catalog[ean].sku !== sku) continue;
       catalog[ean] = { sku };
@@ -849,7 +856,7 @@ $('#input-planilha').addEventListener('change', async (e) => {
     save(K.catalog, catalog);
     mapa.classList.add('hidden');
     mapa.innerHTML = '';
-    let msg = `Importação concluída: ${added} códigos gravados${skipped ? `, ${skipped} linhas ignoradas` : ''}. Total: ${Object.keys(catalog).length}.`;
+    let msg = `Importação concluída: ${added} códigos gravados${skipped ? `, ${skipped} linhas ignoradas` : ''}${outlet ? `, ${outlet} de outlet descartados` : ''}. Total: ${Object.keys(catalog).length}.`;
     if (suspeitos) msg += ` Atenção: ${suspeitos} códigos não parecem EAN válidos — confira se a coluna escolhida é mesmo a do código de barras.`;
     $('#cadastro-status').textContent = msg;
     renderCadastroLista();
@@ -860,18 +867,20 @@ $('#input-planilha').addEventListener('change', async (e) => {
 $('#btn-colar-cadastro').addEventListener('click', () => {
   const lines = $('#cadastro-texto').value.split(/\r?\n/);
   let added = 0;
+  let outlet = 0;
   for (const line of lines) {
     const parts = line.split(/[;,\t]+|\s{2,}|\s+/).map((p) => p.trim()).filter(Boolean);
     if (parts.length < 2) continue;
     const eanPart = parts.find((p) => /^\d{6,}$/.test(onlyDigits(p)) && onlyDigits(p) === p.replace(/\s/g, ''));
     const skuPart = parts.find((p) => p !== eanPart);
     if (!eanPart || !skuPart) continue;
+    if (isSkuOutlet(skuPart)) { outlet++; continue; }
     catalog[onlyDigits(eanPart)] = { sku: skuPart.toUpperCase(), manual: true };
     added++;
   }
   save(K.catalog, catalog);
   $('#cadastro-texto').value = '';
-  $('#cadastro-status').textContent = `${added} códigos adicionados. Total: ${Object.keys(catalog).length}.`;
+  $('#cadastro-status').textContent = `${added} códigos adicionados${outlet ? `, ${outlet} de outlet descartados` : ''}. Total: ${Object.keys(catalog).length}.`;
   renderCadastroLista();
 });
 
@@ -929,6 +938,16 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 // Pede ao sistema para não apagar os dados do app (cadastro, histórico).
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().catch(() => {});
+}
+
+// ---------- Limpeza de SKUs de outlet já gravados ----------
+// Roda uma vez: quem importou antes da v26 tem códigos apontando para o SKU
+// de outlet, que nunca aparece na lista do dia.
+let outletRemovidos = 0;
+if (!localStorage.getItem('cc_outlet_limpo')) {
+  outletRemovidos = limparOutlet(catalog).length;
+  if (outletRemovidos) save(K.catalog, catalog);
+  localStorage.setItem('cc_outlet_limpo', '1');
 }
 
 // ---------- Tema ----------
