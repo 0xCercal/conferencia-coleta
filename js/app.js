@@ -18,7 +18,7 @@ import {
 } from './logic.js';
 
 // Mantenha em sincronia com o CACHE do sw.js a cada publicação.
-const APP_VERSION = 'v27';
+const APP_VERSION = 'v28';
 
 // ---------- Persistência ----------
 const K = { catalog: 'cc_catalogo', conf: 'cc_conferencia', hist: 'cc_historico' };
@@ -125,7 +125,6 @@ function showUltimoBipe(tipo, titulo, detalhe) {
   el.className = tipo;
   el.innerHTML = `<strong>${esc(titulo)}</strong>${detalhe ? esc(detalhe) : ''}`;
   el.classList.remove('hidden');
-  $('#pronto-leitor').classList.add('hidden');
 }
 
 function esc(s) {
@@ -480,8 +479,72 @@ $('#form-manual').addEventListener('submit', (e) => {
   const code = $('#input-manual').value.trim();
   if (!code) return;
   $('#input-manual').value = '';
+  fecharTeclado();
   handleCode(code);
 });
+
+// ---------- Teclado do app ----------
+// Com o leitor Bluetooth conectado, o iOS considera que já existe teclado e
+// não abre o virtual. Este teclado é do app, então funciona sempre.
+let tecladoAlvo = null;
+
+(function montarTeclas() {
+  document.querySelectorAll('#teclado .teclado-linha').forEach((linha) => {
+    for (const ch of linha.dataset.teclas) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = ch;
+      b.dataset.tecla = ch;
+      linha.appendChild(b);
+    }
+  });
+})();
+
+function abrirTeclado(input) {
+  tecladoAlvo = input;
+  $('#teclado-alvo-nome').textContent = input.getAttribute('placeholder') || '';
+  $('#teclado').classList.remove('hidden');
+  document.body.classList.add('teclado-aberto');
+  input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+function fecharTeclado() {
+  tecladoAlvo = null;
+  $('#teclado').classList.add('hidden');
+  document.body.classList.remove('teclado-aberto');
+}
+
+function escreverNoAlvo(transformar) {
+  if (!tecladoAlvo) return;
+  tecladoAlvo.value = transformar(tecladoAlvo.value);
+  tecladoAlvo.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+document.querySelectorAll('input[data-teclado]').forEach((input) => {
+  input.addEventListener('focus', () => abrirTeclado(input));
+  input.addEventListener('click', () => abrirTeclado(input));
+});
+
+$('#teclado').addEventListener('mousedown', (e) => e.preventDefault());
+
+$('#teclado').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.id === 'teclado-fechar' || b.dataset.acao === 'ok') {
+    const alvo = tecladoAlvo;
+    fecharTeclado();
+    if (b.dataset.acao === 'ok' && alvo && alvo.id === 'input-manual' && alvo.value.trim()) {
+      $('#form-manual').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+    return;
+  }
+  if (b.dataset.tecla) escreverNoAlvo((v) => v + b.dataset.tecla);
+  else if (b.dataset.acao === 'apagar') escreverNoAlvo((v) => v.slice(0, -1));
+  else if (b.dataset.acao === 'limpar') escreverNoAlvo(() => '');
+});
+
+// Trocar de aba fecha o teclado.
+document.querySelectorAll('#navbar button').forEach((b) => b.addEventListener('click', fecharTeclado));
 
 // ---------- Leitor Bluetooth (modo teclado) ----------
 // Leitores físicos "digitam" o código e mandam Enter. Captura global:

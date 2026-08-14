@@ -99,7 +99,6 @@
 :root[data-tema^="terminal"] textarea,
 :root[data-tema^="terminal"] input,
 :root[data-tema^="terminal"] #ultimo-bipe,
-:root[data-tema^="terminal"] #pronto-leitor,
 :root[data-tema^="terminal"] #mascote,
 :root[data-tema^="terminal"] #reader { border-radius: var(--raio); }
 :root[data-tema^="terminal"] .item-list li .item-sku::before { content: "> "; color: var(--texto-2); }
@@ -294,16 +293,6 @@ button:active { transform: scale(0.98); }
 #ultimo-bipe.aviso { background: var(--aviso-bg); color: var(--aviso-fg); }
 #ultimo-bipe strong { display: block; font-size: 21px; font-weight: 700; margin-bottom: 3px; }
 
-#pronto-leitor {
-  border: 1px dashed var(--borda);
-  border-radius: 12px;
-  padding: 16px 12px;
-  margin-bottom: 10px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--texto-2);
-}
-
 .btn-desfazer {
   display: block;
   width: 100%;
@@ -417,6 +406,42 @@ button:active { transform: scale(0.98); }
 #nova-preview { margin-top: 12px; }
 #nova-preview .aviso-linhas { background: var(--aviso-bg); color: var(--aviso-fg); border-radius: 10px; padding: 10px; font-size: 13px; margin-bottom: 8px; }
 #nova-preview .empresa-resumo { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 10px; font-size: 14px; margin-bottom: 8px; }
+
+/* Teclado interno do app */
+#teclado {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  z-index: 70;
+  background: var(--fundo);
+  border-top: 1px solid var(--borda);
+  padding: 8px 6px 10px;
+}
+.teclado-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 8px;
+  font-size: 13px;
+  color: var(--texto-2);
+}
+.teclado-topo button { padding: 6px 12px; font-size: 13px; }
+.teclado-linhas { display: flex; flex-direction: column; gap: 6px; }
+.teclado-linha { display: flex; justify-content: center; gap: 5px; }
+.teclado-linha button {
+  flex: 1 1 0;
+  max-width: 40px;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+.teclado-acoes { display: flex; gap: 6px; margin-top: 8px; }
+.teclado-acoes button { flex: 1; padding: 12px 0; font-size: 15px; font-weight: 600; }
+.teclado-acoes .tecla-ok { background: var(--verde); border-color: var(--verde); color: #fff; }
+body.teclado-aberto { padding-bottom: calc(330px + env(safe-area-inset-bottom)); }
 
 /* Barra de navegação */
 #navbar {

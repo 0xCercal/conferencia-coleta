@@ -42,10 +42,9 @@
           <div id="badge-teste" class="badge-teste hidden">MODO TESTE — não vai para o histórico</div>
         <div id="conf-abas" class="tabs"></div>
         <div id="ultimo-bipe" class="hidden"></div>
-        <div id="pronto-leitor">Pronto para bipar — aperte o gatilho do leitor</div>
         <button id="btn-desfazer" class="btn-desfazer hidden">↩︎ Desfazer último bipe</button>
         <form id="form-manual" class="manual-row">
-          <input id="input-manual" type="text" inputmode="text" autocomplete="off" placeholder="Bipe ou digite o código / SKU" />
+          <input id="input-manual" type="text" inputmode="none" autocomplete="off" data-teclado placeholder="Bipe ou digite o código / SKU" />
           <button type="submit">OK</button>
         </form>
         <ul id="conf-lista" class="item-list"></ul>
@@ -79,7 +78,7 @@
       </div>
       <div id="mapeamento" class="card hidden"></div>
       <div class="card">
-        <input id="cadastro-busca" type="search" placeholder="Buscar SKU ou código" />
+        <input id="cadastro-busca" type="search" inputmode="none" data-teclado placeholder="Buscar SKU ou código" />
         <ul id="cadastro-lista" class="item-list"></ul>
       </div>
       <div class="card">
@@ -114,6 +113,26 @@
   <!-- Diálogos -->
   <div id="overlay" class="hidden">
     <div id="dialogo" class="card"></div>
+  </div>
+
+  <!-- Teclado do próprio app: com o leitor Bluetooth conectado o iOS não
+       abre o teclado virtual dele. -->
+  <div id="teclado" class="hidden" aria-label="Teclado">
+    <div class="teclado-topo">
+      <span id="teclado-alvo-nome"></span>
+      <button type="button" id="teclado-fechar">Fechar</button>
+    </div>
+    <div class="teclado-linhas">
+      <div class="teclado-linha" data-teclas="1234567890"></div>
+      <div class="teclado-linha" data-teclas="QWERTYUIOP"></div>
+      <div class="teclado-linha" data-teclas="ASDFGHJKL-"></div>
+      <div class="teclado-linha" data-teclas="ZXCVBNM"></div>
+    </div>
+    <div class="teclado-acoes">
+      <button type="button" data-acao="limpar">Limpar</button>
+      <button type="button" data-acao="apagar">⌫ Apagar</button>
+      <button type="button" data-acao="ok" class="tecla-ok">OK</button>
+    </div>
   </div>
 
   <nav id="navbar">
