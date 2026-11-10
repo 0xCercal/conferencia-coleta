@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0f6e56" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#101312" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-title" content="Coleta" />
+  <meta id="meta-tema" name="theme-color" content="#f6f5f0" />
   <title>Conferência de Coleta</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -22,98 +22,187 @@
 
     <!-- Tela: Nova conferência -->
     <section id="view-nova" class="view">
-      <img id="mascote" src="mascote.png" alt="" aria-hidden="true" />
-      <h1>Nova conferência</h1>
-      <p class="hint">Cole abaixo a mensagem do WhatsApp com a lista de coleta.</p>
-      <textarea id="nova-texto" rows="12" placeholder="*FERCRIS*&#10;1 - SGR-0501 Sifão de Inox...&#10;&#10;*CERCAL*&#10;1 - LEMI-0501 Lixeira..."></textarea>
-      <div id="nova-preview" class="hidden"></div>
-      <button id="btn-montar" class="btn-primary">Montar checklist</button>
-      <button id="btn-teste" class="btn-secondary">Iniciar conferência de teste</button>
-      <p class="hint" style="margin-top:8px">A conferência de teste usa uma lista fictícia e não entra no histórico.</p>
+      <div class="hero">
+        <img id="mascote" src="mascote.png" alt="" aria-hidden="true" />
+        <h1>Nova conferência</h1>
+        <p class="hint">Cole a lista de coleta recebida no WhatsApp.</p>
+      </div>
+
+      <div id="nova-andamento" class="banner hidden"></div>
+
+      <div class="card pilha">
+        <div class="campo-topo">
+          <label class="rotulo" for="nova-texto">Lista de coleta</label>
+          <button type="button" id="btn-limpar-lista" class="btn-texto hidden">Limpar</button>
+        </div>
+        <button type="button" id="btn-colar" class="btn-tonal">
+          <svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="4" y="0" width="4" height="2"/><rect x="2" y="1" width="2" height="1"/><rect x="8" y="1" width="2" height="1"/><rect x="2" y="2" width="1" height="9"/><rect x="9" y="2" width="1" height="9"/><rect x="2" y="11" width="8" height="1"/><rect x="4" y="5" width="4" height="1"/><rect x="4" y="7" width="4" height="1"/></g></svg>
+          Colar da área de transferência
+        </button>
+        <textarea id="nova-texto" rows="7" placeholder="*FERCRIS* — 10/11/2026&#10;1 - TB119&#10;2 - TC70&#10;&#10;*CERCAL* — 10/11/2026&#10;5 - TC72"></textarea>
+      </div>
+
+      <div id="nova-preview" class="pilha hidden"></div>
+
+      <button type="button" id="btn-iniciar" class="btn-primary" disabled>Iniciar conferência</button>
+
+      <div class="rodape-nova">
+        <button type="button" id="btn-teste" class="btn-texto">Fazer uma conferência de teste</button>
+        <p class="hint">Usa uma lista fictícia e não entra no histórico.</p>
+      </div>
     </section>
 
     <!-- Tela: Conferência -->
     <section id="view-conferencia" class="view hidden">
       <div id="conf-vazia" class="empty-state hidden">
-        <p>Nenhuma conferência em andamento.</p>
-        <button class="btn-primary" data-goto="nova">Iniciar nova conferência</button>
+        <svg class="empty-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="1" y="2" width="1" height="8"/><rect x="3" y="2" width="2" height="8"/><rect x="6" y="2" width="1" height="8"/><rect x="8" y="2" width="1" height="8"/><rect x="10" y="2" width="1" height="8"/></g></svg>
+        <h2>Nenhuma conferência em andamento</h2>
+        <p>Cole a lista do dia para começar a bipar.</p>
+        <button type="button" class="btn-primary" data-goto="nova">Nova conferência</button>
       </div>
+
       <div id="conf-conteudo">
-          <div id="badge-teste" class="badge-teste hidden">MODO TESTE — não vai para o histórico</div>
-        <div id="conf-abas" class="tabs"></div>
-        <div id="ultimo-bipe" class="hidden"></div>
-        <button id="btn-desfazer" class="btn-desfazer hidden">↩︎ Desfazer último bipe</button>
+        <div class="conf-fixo">
+          <div id="badge-teste" class="badge-teste hidden">Modo teste — não entra no histórico</div>
+          <header class="topo">
+            <div class="topo-texto">
+              <h1>Conferência</h1>
+              <p id="conf-resumo" class="topo-sub"></p>
+            </div>
+            <button type="button" id="btn-resumo-topo" class="btn-tonal btn-compacto">Resumo</button>
+          </header>
+          <div id="conf-abas" class="tabs" role="tablist"></div>
+          <div class="bipe-linha">
+            <div id="ultimo-bipe" class="hidden" role="status" aria-live="polite"></div>
+            <button type="button" id="btn-desfazer" class="btn-desfazer hidden" aria-label="Desfazer último bipe">
+              <svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="3" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="1" y="3" width="7" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="8" y="4" width="2" height="1"/><rect x="10" y="5" width="1" height="4"/><rect x="8" y="9" width="2" height="1"/><rect x="4" y="10" width="4" height="1"/></g></svg>
+              <span>Desfazer</span>
+            </button>
+          </div>
+        </div>
+
         <form id="form-manual" class="manual-row">
-          <input id="input-manual" type="text" inputmode="none" autocomplete="off" data-teclado placeholder="Bipe ou digite o código / SKU" />
+          <input id="input-manual" type="text" inputmode="none" autocomplete="off" data-teclado placeholder="Bipe ou digite o código / SKU" aria-label="Código ou SKU" />
           <button type="submit">OK</button>
         </form>
+
         <ul id="conf-lista" class="item-list"></ul>
-        <details id="camera-bloco" class="card">
+
+        <details id="camera-bloco" class="card recolhivel">
           <summary>Usar a câmera (reserva)</summary>
           <div id="reader" class="hidden"></div>
           <div id="zoom-controle" class="zoom-cards hidden"></div>
-          <button id="btn-scanner" class="btn-primary">Bipar com a câmera</button>
+          <button type="button" id="btn-scanner" class="btn-secondary">Bipar com a câmera</button>
         </details>
-        <button id="btn-finalizar" class="btn-secondary">Ver resumo / finalizar</button>
+
+        <button type="button" id="btn-finalizar" class="btn-primary">Ver resumo e finalizar</button>
         <img class="mascote-mini" src="mascote.png" alt="" aria-hidden="true" />
       </div>
     </section>
 
     <!-- Tela: Cadastro -->
     <section id="view-cadastro" class="view hidden">
-      <h1>Cadastro de produtos</h1>
-      <p class="hint">Relação SKU ↔ código de barras do fornecedor. Importe a planilha exportada ou cole o texto.</p>
-      <div id="aviso-backup" class="aviso-backup hidden"></div>
-      <div class="card">
-        <p id="cadastro-status"></p>
-        <label class="file-label">
-          Importar planilha (.xlsx ou .csv)
-          <input id="input-planilha" type="file" accept=".xlsx,.xls,.csv" hidden />
-        </label>
-        <details>
-          <summary>Ou colar texto (SKU e código por linha)</summary>
-          <textarea id="cadastro-texto" rows="5" placeholder="SGR-0501;7891234567890&#10;DHTA02;7899876543210"></textarea>
-          <button id="btn-colar-cadastro">Adicionar do texto</button>
-        </details>
-      </div>
-      <div id="mapeamento" class="card hidden"></div>
-      <div class="card">
-        <input id="cadastro-busca" type="search" inputmode="none" data-teclado placeholder="Buscar SKU ou código" />
-        <ul id="cadastro-lista" class="item-list"></ul>
-      </div>
-      <div class="card">
-        <p>Tema do app</p>
-        <div id="tema-opcoes" class="zoom-cards" style="margin-top:10px;margin-bottom:0">
-          <button data-tema="auto">Automático</button>
-          <button data-tema="claro">Claro</button>
-          <button data-tema="escuro">Escuro</button>
-          <button data-tema="terminal">Terminal</button>
-          <button data-tema="terminal-claro">Terminal claro</button>
+      <header class="topo">
+        <div class="topo-texto">
+          <h1>Cadastro</h1>
+          <p id="cadastro-resumo" class="topo-sub"></p>
         </div>
-      </div>
-      <button id="btn-exportar-cadastro" class="btn-secondary">Exportar cadastro (backup)</button>
-      <label class="file-label" style="background:transparent;color:var(--texto);border:1px solid var(--borda)">
-        Restaurar backup (.csv)
-        <input id="input-backup" type="file" accept=".csv,text/csv" hidden />
-      </label>
-      <button id="btn-limpar-cadastro" class="btn-danger-ghost">Apagar todo o cadastro</button>
+      </header>
+
+      <div id="aviso-backup" class="banner banner-aviso hidden"></div>
+
+      <section class="secao">
+        <h2 class="secao-titulo">Códigos</h2>
+        <div class="pilha">
+          <input id="cadastro-busca" type="search" inputmode="none" data-teclado placeholder="Buscar SKU ou código" aria-label="Buscar SKU ou código" autocomplete="off" />
+          <ul id="cadastro-lista" class="item-list"></ul>
+          <p id="cadastro-lista-nota" class="hint centro hidden"></p>
+        </div>
+      </section>
+
+      <section class="secao">
+        <h2 class="secao-titulo">Importar</h2>
+        <p id="cadastro-status" class="banner banner-info hidden" role="status"></p>
+        <div class="card lista-acoes">
+          <label class="linha-acao">
+            <span class="la-texto"><strong>Importar planilha</strong><small>Arquivo .xlsx ou .csv com SKU e código de barras</small></span>
+            <span class="la-seta" aria-hidden="true">›</span>
+            <input id="input-planilha" type="file" accept=".xlsx,.xls,.csv" hidden />
+          </label>
+          <details class="linha-detalhe">
+            <summary class="linha-acao">
+              <span class="la-texto"><strong>Colar texto</strong><small>Um SKU e um código por linha</small></span>
+              <span class="la-seta" aria-hidden="true">›</span>
+            </summary>
+            <div class="pilha linha-corpo">
+              <textarea id="cadastro-texto" rows="4" placeholder="SGR-0501;7891234567890&#10;DHTA02;7899876543210"></textarea>
+              <button type="button" id="btn-colar-cadastro" class="btn-secondary">Adicionar ao cadastro</button>
+            </div>
+          </details>
+        </div>
+        <div id="mapeamento" class="card pilha hidden"></div>
+      </section>
+
+      <section class="secao">
+        <h2 class="secao-titulo">Backup</h2>
+        <div class="card lista-acoes">
+          <button type="button" id="btn-exportar-cadastro" class="linha-acao">
+            <span class="la-texto"><strong>Exportar backup</strong><small id="backup-info"></small></span>
+            <span class="la-seta" aria-hidden="true">›</span>
+          </button>
+          <label class="linha-acao">
+            <span class="la-texto"><strong>Restaurar backup</strong><small>Arquivo .csv gerado por este app</small></span>
+            <span class="la-seta" aria-hidden="true">›</span>
+            <input id="input-backup" type="file" accept=".csv,text/csv" hidden />
+          </label>
+        </div>
+        <p class="hint nota-secao">Os dados ficam só neste aparelho. Se o app for removido da tela de início, o iPhone apaga tudo — o backup é a única cópia.</p>
+      </section>
+
+      <section class="secao">
+        <h2 class="secao-titulo">Aparência</h2>
+        <div id="tema-opcoes" class="temas">
+          <button type="button" data-tema="auto"><span class="amostra amostra-auto" aria-hidden="true"></span>Automático</button>
+          <button type="button" data-tema="claro"><span class="amostra amostra-claro" aria-hidden="true"></span>Claro</button>
+          <button type="button" data-tema="escuro"><span class="amostra amostra-escuro" aria-hidden="true"></span>Escuro</button>
+          <button type="button" data-tema="terminal"><span class="amostra amostra-terminal" aria-hidden="true"></span>Terminal</button>
+          <button type="button" data-tema="terminal-claro"><span class="amostra amostra-terminal-claro" aria-hidden="true"></span>Terminal claro</button>
+        </div>
+      </section>
+
+      <section class="secao">
+        <h2 class="secao-titulo">Zona de risco</h2>
+        <button type="button" id="btn-limpar-cadastro" class="btn-danger-ghost">Apagar todo o cadastro</button>
+      </section>
+
       <p id="versao-app" class="versao"></p>
       <img class="mascote-mini" src="mascote.png" alt="" aria-hidden="true" />
     </section>
 
     <!-- Tela: Histórico -->
     <section id="view-historico" class="view hidden">
-      <h1>Histórico</h1>
-      <div id="historico-lista"></div>
+      <header class="topo">
+        <div class="topo-texto">
+          <h1>Histórico</h1>
+          <p id="historico-resumo" class="topo-sub"></p>
+        </div>
+      </header>
+      <div id="historico-lista" class="pilha"></div>
       <img class="mascote-mini" src="mascote.png" alt="" aria-hidden="true" />
     </section>
 
   </main>
 
-  <!-- Diálogos -->
+  <!-- Folha de diálogo (sobe da base da tela) -->
   <div id="overlay" class="hidden">
-    <div id="dialogo" class="card"></div>
+    <div id="dialogo" role="dialog" aria-modal="true"></div>
   </div>
+
+  <!-- Confirmação de ações destrutivas -->
+  <div id="confirmacao" class="hidden"></div>
+
+  <!-- Aviso rápido -->
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <!-- Teclado do próprio app: com o leitor Bluetooth conectado o iOS não
        abre o teclado virtual dele. -->
@@ -135,18 +224,18 @@
     </div>
   </div>
 
-  <nav id="navbar">
-    <button data-goto="nova">
-      <svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="5" y="1" width="2" height="10"/><rect x="1" y="5" width="10" height="2"/></g></svg>Nova
+  <nav id="navbar" aria-label="Seções do app">
+    <button type="button" data-goto="nova">
+      <span class="nav-pill"><svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="5" y="1" width="2" height="10"/><rect x="1" y="5" width="10" height="2"/></g></svg></span>Nova
     </button>
-    <button data-goto="conferencia" class="active">
-      <svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="1" y="2" width="1" height="8"/><rect x="3" y="2" width="2" height="8"/><rect x="6" y="2" width="1" height="8"/><rect x="8" y="2" width="1" height="8"/><rect x="10" y="2" width="1" height="8"/></g></svg>Conferir
+    <button type="button" data-goto="conferencia">
+      <span class="nav-pill"><svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="1" y="2" width="1" height="8"/><rect x="3" y="2" width="2" height="8"/><rect x="6" y="2" width="1" height="8"/><rect x="8" y="2" width="1" height="8"/><rect x="10" y="2" width="1" height="8"/></g></svg></span>Conferir
     </button>
-    <button data-goto="cadastro">
-      <svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="1" y="2" width="10" height="2"/><rect x="1" y="5" width="10" height="2"/><rect x="1" y="8" width="10" height="2"/></g></svg>Cadastro
+    <button type="button" data-goto="cadastro">
+      <span class="nav-pill"><svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="1" y="2" width="10" height="2"/><rect x="1" y="5" width="10" height="2"/><rect x="1" y="8" width="10" height="2"/></g></svg></span>Cadastro
     </button>
-    <button data-goto="historico">
-      <svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="4" y="1" width="4" height="1"/><rect x="4" y="10" width="4" height="1"/><rect x="1" y="4" width="1" height="4"/><rect x="10" y="4" width="1" height="4"/><rect x="2" y="2" width="2" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="2" y="9" width="2" height="1"/><rect x="8" y="9" width="2" height="1"/><rect x="5" y="3" width="1" height="3"/><rect x="6" y="6" width="2" height="1"/></g></svg>Histórico
+    <button type="button" data-goto="historico">
+      <span class="nav-pill"><svg class="nav-ico" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor" shape-rendering="crispEdges"><rect x="4" y="1" width="4" height="1"/><rect x="4" y="10" width="4" height="1"/><rect x="1" y="4" width="1" height="4"/><rect x="10" y="4" width="1" height="4"/><rect x="2" y="2" width="2" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="2" y="9" width="2" height="1"/><rect x="8" y="9" width="2" height="1"/><rect x="5" y="3" width="1" height="3"/><rect x="6" y="6" width="2" height="1"/></g></svg></span>Histórico
     </button>
   </nav>
 
